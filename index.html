@@ -32,7 +32,6 @@
 
         .app-content { display: none; }
         .header-title { text-align: center; font-size: 20px; font-weight: 800; color: var(--primary); margin-bottom: 12px; }
-        
         .card { background: #fff; border-radius: 12px; padding: 16px; margin-bottom: 12px; border: 1px solid var(--border); }
         .user-info { display: flex; justify-content: space-between; align-items: center; background: #e8f5e9; padding: 8px 12px; border-radius: 8px; margin-bottom: 12px; font-size: 13px; font-weight: bold; color: var(--primary); }
         .logout-link { color: #e63946; cursor: pointer; text-decoration: underline; }
@@ -62,8 +61,8 @@
         <div class="header-title">🎣 Графік Чергування</div>
 
         <div class="card">
-            <h3>Статус підключення: <span style="color: green;">✓ Синхронізовано з хмарою</span></h3>
-            <p style="font-size: 13px; color: #555;">Графік чергувань автоматично оновлюється з Google Таблиці.</p>
+            <h3>Статус: <span style="color: green;">✓ Авторизовано</span></h3>
+            <p style="font-size: 13px; color: #555;">Ви успішно увійшли у систему чергування рибалок.</p>
         </div>
     </div>
 
@@ -76,12 +75,16 @@
             var pass = document.getElementById('loginPassword').value;
             var errDiv = document.getElementById('authError');
 
+            if (!user || !pass) {
+                errDiv.innerText = "Будь ласка, введіть логін та пароль";
+                return;
+            }
+
             errDiv.innerText = "Перевірка...";
 
-            fetch(WEB_APP_URL, {
-                method: "POST",
-                body: JSON.stringify({ action: "login", username: user, password: pass })
-            })
+            var url = WEB_APP_URL + "?action=login&username=" + encodeURIComponent(user) + "&password=" + encodeURIComponent(pass);
+
+            fetch(url)
             .then(res => res.json())
             .then(data => {
                 if (data.status === "success") {
@@ -89,7 +92,7 @@
                     localStorage.setItem('currentUser', JSON.stringify(data));
                     showApp();
                 } else {
-                    errDiv.innerText = data.message || "Помилка входу";
+                    errDiv.innerText = data.message || "Невірний логін або пароль";
                 }
             })
             .catch(err => {
@@ -108,7 +111,7 @@
             location.reload();
         }
 
-        // Перевірка збереженої сесії
+        // Перевірка збереженої сесії під час відкриття сторінки
         var savedUser = localStorage.getItem('currentUser');
         if (savedUser) {
             currentUser = JSON.parse(savedUser);
