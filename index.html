@@ -49,7 +49,7 @@
         .calendar-card.pending { border-left: 6px solid #ffb703; }
         
         .cal-date { font-weight: bold; font-size: 16px; color: var(--primary); margin-bottom: 8px; border-bottom: 1px solid #eee; padding-bottom: 6px; display: flex; justify-content: space-between; align-items: center; }
-        .cal-slot { font-size: 14px; margin: 6px 0; display: flex; justify-content: space-between; align-items: center; background: #fafafa; padding: 6px 8px; border-radius: 6px; }
+        .cal-slot { font-size: 13px; margin: 6px 0; display: flex; justify-content: space-between; align-items: center; background: #fafafa; padding: 6px 8px; border-radius: 6px; gap: 6px; }
         
         .card { background: #fff; border-radius: 12px; padding: 16px; margin-bottom: 14px; border: 1px solid var(--border); }
         .list-group { list-style: none; padding: 0; margin: 0; max-height: 450px; overflow-y: auto; }
@@ -97,9 +97,9 @@
 
         <!-- ВКЛАДКА 1: КАЛЕНДАР ТА БРОНЮВАННЯ -->
         <div id="tab-schedule" class="tab-content">
-            <h3>📅 Календар чергувань (Самостійний запис)</h3>
+            <h3>📅 Календар чергувань</h3>
             <div class="card">
-                <p style="font-size: 13px; color: #555; margin-top:0;">Оберіть вільну дату та натисніть кнопку **«Забронювати»**, щоб записатися на чергування.</p>
+                <p style="font-size: 13px; color: #555; margin-top:0;">Оберіть вільну дату та натисніть «Забронювати». Адмін може змінювати будь-якого рибалку.</p>
                 <div class="grid-2">
                     <div>
                         <label>Дата початку місяця:</label>
@@ -131,11 +131,11 @@
             </div>
         </div>
 
-        <!-- ВКЛАДКА 3: ГЕНЕРАТОР (Лише для Адміна) -->
+        <!-- ВКЛАДКА 3: ГЕНЕРАТОР (Адмін) -->
         <div id="tab-generator" class="tab-content hidden admin-only">
             <h3>⚙️ Генератор порожнього календаря</h3>
             <div class="card">
-                <p style="font-size: 14px; color: #555;">Створює сітку порожніх днів на обрану кількість днів, щоб учасники могли самі займати зручні дати.</p>
+                <p style="font-size: 14px; color: #555;">Створює сітку повністю порожніх днів для самостійного бронювання учасниками.</p>
                 <div class="form-group">
                     <label>Кількість днів:</label>
                     <input type="number" id="genDays" value="30" min="1" max="90">
@@ -148,7 +148,7 @@
         <div id="tab-sync" class="tab-content hidden">
             <h3>🔄 Хмарна синхронізація</h3>
             <div class="card">
-                <p style="font-size: 14px; color: #555;">Зберігайте заброньовані дати та відмітки у вашу Google Таблицю.</p>
+                <p style="font-size: 14px; color: #555;">Зберігайте заброньовані дати та статуси у вашу Google Таблицю[cite: 4].</p>
                 <button onclick="saveToCloud()" style="margin-bottom: 10px;">☁️ Зберегти в Google Таблицю</button>
                 <button class="btn-secondary" onclick="loadFromCloud()">📥 Завантажити з Таблиці</button>
                 <div id="syncStatus" class="status-msg"></div>
@@ -253,7 +253,7 @@
         loadLocalData();
         renderFishermen();
         updateFishermenDropdown();
-        if (db.shifts.length === 0) generateEmptySchedule(30);
+        if (db.shifts.length === 0) generateEmptySchedule();
         renderSchedule();
     }
 
@@ -331,7 +331,6 @@
         }
     }
 
-    // Створення ПОРУШЕНИХ (порожніх) днів для бронювання
     function generateEmptySchedule() {
         const days = parseInt(document.getElementById('genDays').value) || 30;
         db.shifts = [];
@@ -340,26 +339,19 @@
         }
         saveLocalData();
         renderSchedule();
-        alert("Створено порожній календар для бронювання!");
+        alert("Створено повністю порожній календар!");
         switchTab('tab-schedule', document.querySelectorAll('.nav-tab')[0]);
     }
 
-    function bookShift(idx, slotNum) {
-        const userName = currentUser.username;
+    // Бронювання або зміна учасника (Адмін може ставити будь-кого, рибалка — себе)
+    function bookShift(idx, slotNum, selectedName = null) {
         const shift = db.shifts[idx];
+        const userName = selectedName || currentUser.username;
 
         if (slotNum === 1) {
-            if (shift.p1 && shift.p1 !== userName && currentUser.role !== 'admin') {
-                alert("Це місце вже зайняте іншим рибалкою!");
-                return;
-            }
-            shift.p1 = (shift.p1 === userName) ? "" : userName; // Якщо клікнув знову — скасовує бронювання
+            shift.p1 = (shift.p1 === userName && !selectedName) ? "" : userName;
         } else if (slotNum === 2) {
-            if (shift.p2 && shift.p2 !== userName && currentUser.role !== 'admin') {
-                alert("Це місце вже зайняте іншим рибалкою!");
-                return;
-            }
-            shift.p2 = (shift.p2 === userName) ? "" : userName;
+            shift.p2 = (shift.p2 === userName && !selectedName) ? "" : userName;
         }
 
         saveLocalData();
@@ -372,7 +364,7 @@
         const filter = document.getElementById('filterFisherman').value;
 
         if (!db.shifts || db.shifts.length === 0) {
-            container.innerHTML = '<p>Календар порожній. Адмін може згенерувати його у відповідній вкладці.</p>';
+            container.innerHTML = '<p>Календар порожній.</p>';
             return;
         }
 
@@ -392,12 +384,38 @@
             if (shift.status === 'done') statusText = '✓ Відчергували';
             if (shift.status === 'missed') statusText = '✕ Пропустили';
 
-            // Адмін може керувати статусами (хто чергував / хто пропустив)
-            let adminControls = '';
+            // Формування виглядів для першого та другого місця чергування
+            let slot1Html = '';
+            let slot2Html = '';
+
             if (currentUser.role === 'admin') {
-                adminControls = `
+                // Адмін може вибрати будь-кого зі списку або очистити слот
+                let options1 = '<option value="">-- Вільно --</option>';
+                let options2 = '<option value="">-- Вільно --</option>';
+                db.fishermen.forEach(f => {
+                    options1 += `<option value="${f}" ${shift.p1 === f ? 'selected' : ''}>${f}</option>`;
+                    options2 += `<option value="${f}" ${shift.p2 === f ? 'selected' : ''}>${f}</option>`;
+                });
+
+                slot1Html = `<span>1.</span> <select onchange="bookShift(${idx}, 1, this.value)" style="padding:4px; font-size:12px; flex:1;">${options1}</select>`;
+                slot2Html = `<span>2.</span> <select onchange="bookShift(${idx}, 2, this.value)" style="padding:4px; font-size:12px; flex:1;">${options2}</select>`;
+            } else {
+                // Для звичайного рибалки
+                let p1Text = shift.p1 ? `<b>${shift.p1}</b>` : '<span style="color:#aaa">Вільно</span>';
+                let p2Text = shift.p2 ? `<b>${shift.p2}</b>` : '<span style="color:#aaa">Вільно</span>';
+                let btn1Text = (shift.p1 === currentUser.username) ? 'Скасувати' : 'Забронювати';
+                let btn2Text = (shift.p2 === currentUser.username) ? 'Скасувати' : 'Забронювати';
+
+                slot1Html = `<span>1. ${p1Text}</span> <button class="btn-book" style="background:${shift.p1===currentUser.username?'#e63946':'#3a86ff'}; padding:4px 8px; font-size:12px;" onclick="bookShift(${idx}, 1)">${btn1Text}</button>`;
+                slot2Html = `<span>2. ${p2Text}</span> <button class="btn-book" style="background:${shift.p2===currentUser.username?'#e63946':'#52b788'}; padding:4px 8px; font-size:12px;" onclick="bookShift(${idx}, 2)">${btn2Text}</button>`;
+            }
+
+            // Статуси (адмін бачить і може змінювати, хто відчергував, а хто пропустив)
+            let adminStatusHtml = '';
+            if (currentUser.role === 'admin') {
+                adminStatusHtml = `
                     <div style="margin-top: 8px; border-top: 1px dashed #ddd; padding-top: 6px;">
-                        <label style="font-size:11px; margin-bottom:2px;">Статус чергування (Адмін):</label>
+                        <label style="font-size:11px; margin-bottom:2px;">Звіт про чергування:</label>
                         <select onchange="updateShiftStatus(${idx}, this.value)" style="padding:4px; font-size:12px; width:100%;">
                             <option value="pending" ${shift.status==='pending'?'selected':''}>⏳ Очікується</option>
                             <option value="done" ${shift.status==='done'?'selected':''}>✓ Відчергували</option>
@@ -407,29 +425,16 @@
                 `;
             }
 
-            // Кнопки бронювання для учасників (або скасування свого запису)
-            let p1Text = shift.p1 ? `<b>${shift.p1}</b>` : '<span style="color:#aaa">Вільне місце</span>';
-            let p2Text = shift.p2 ? `<b>${shift.p2}</b>` : '<span style="color:#aaa">Вільне місце</span>';
-
-            let btn1Text = (shift.p1 === currentUser.username) ? 'Скасувати' : 'Забронювати';
-            let btn2Text = (shift.p2 === currentUser.username) ? 'Скасувати' : 'Забронювати';
-
             card.innerHTML = `
                 <div>
                     <div class="cal-date">
                         <span>📅 ${dateStr}</span>
                         <span style="font-size: 11px; font-weight: bold; color: ${shift.status==='done'?'#2a9d8f':(shift.status==='missed'?'#e63946':'#b5838d')}">${statusText}</span>
                     </div>
-                    <div class="cal-slot">
-                        <span>1. ${p1Text}</span>
-                        <button class="btn-book" style="background:${shift.p1===currentUser.username?'#e63946':'#3a86ff'}" onclick="bookShift(${idx}, 1)">${btn1Text}</button>
-                    </div>
-                    <div class="cal-slot">
-                        <span>2. ${p2Text}</span>
-                        <button class="btn-book" style="background:${shift.p2===currentUser.username?'#e63946':'#52b788'}" onclick="bookShift(${idx}, 2)">${btn2Text}</button>
-                    </div>
+                    <div class="cal-slot">${slot1Html}</div>
+                    <div class="cal-slot">${slot2Html}</div>
                 </div>
-                ${adminControls}
+                ${adminStatusHtml}
             `;
             container.appendChild(card);
         });
@@ -438,6 +443,7 @@
     function updateShiftStatus(idx, val) {
         db.shifts[idx].status = val;
         saveLocalData();
+        renderSchedule();
     }
 
     function saveToCloud() {
