@@ -63,13 +63,13 @@
 <body>
 
 <div class="container">
-    <!-- АВТОРИЗАЦІЯ -->
+    <!-- АВТОРИЗАЦІЯ (Без жодних згадок паролів для сторонніх) -->
     <div id="login-section" class="auth-container">
         <h2>🎣 Водойма Торчин</h2>
-        <p style="text-align: center; font-size: 13px; color: #666; margin-bottom: 20px;">Вхід для рибалок (Пароль для всіх: <b>123456</b>)</p>
+        <p style="text-align: center; font-size: 13px; color: #666; margin-bottom: 20px;">Вхід у систему чергувань</p>
         <div class="form-group">
-            <label>Логін (Ваше Прізвище):</label>
-            <input type="text" id="username" placeholder="Наприклад: Петренко Тарас або admin">
+            <label>Логін (Ваше Прізвище або admin):</label>
+            <input type="text" id="username" placeholder="Введіть логін">
         </div>
         <div class="form-group">
             <label>Пароль:</label>
@@ -99,6 +99,7 @@
         <div id="tab-schedule" class="tab-content">
             <h3>📅 Календар чергувань на водоймі</h3>
             <div class="card">
+                <p style="font-size: 13px; color: #555; margin-top:0;">Ви можете обрати вільну дату та натиснути **«Зайняти»**, щоб записатися на чергування.</p>
                 <div class="grid-2">
                     <div>
                         <label>Дата початку місяця:</label>
@@ -112,13 +113,12 @@
                     </div>
                 </div>
             </div>
-            <!-- Вигляд календаря картками днів -->
             <div id="calendarContainer" class="calendar-grid"></div>
         </div>
 
         <!-- ВКЛАДКА 2: РИБАЛКИ -->
         <div id="tab-fishermen" class="tab-content hidden">
-            <h3>👥 Список рибалок спільноти (≈40 чол.)</h3>
+            <h3>👥 Список рибалок спільноти</h3>
             <div class="card admin-only">
                 <label>Додати нового рибалку:</label>
                 <div style="display: flex; gap: 8px;">
@@ -131,11 +131,11 @@
             </div>
         </div>
 
-        <!-- ВКЛАДКА 3: ГЕНЕРАТОР -->
+        <!-- ВКЛАДКА 3: ГЕНЕРАТОР (Лише для Адміна) -->
         <div id="tab-generator" class="tab-content hidden admin-only">
             <h3>⚙️ Генератор місячного графіку</h3>
             <div class="card">
-                <p style="font-size: 14px; color: #555;">Автоматично розписує рибалок по 2 на добу. Кожен рибалка може сам зайняти потрібний день у календарі.</p>
+                <p style="font-size: 14px; color: #555;">Автоматично розподіляє рибалок по 2 на добу.</p>
                 <div class="form-group">
                     <label>Кількість днів:</label>
                     <input type="number" id="genDays" value="30" min="1" max="90">
@@ -184,11 +184,11 @@
         const errorDiv = document.getElementById('login-error');
         
         if (!user || !pass) {
-            errorDiv.innerText = "Введіть прізвище та пароль!";
+            errorDiv.innerText = "Введіть логін та пароль!";
             return;
         }
 
-        // Локальна перевірка універсального пароля для рибалок (123456) або адміна
+        // Перевірка для рибалок за універсальним паролем "123456" (або ваш власний, який ви їм дасте)
         if (pass === "123456" && user.toLowerCase() !== "admin") {
             currentUser = { username: user, role: "user" };
             localStorage.setItem('cherg_user', JSON.stringify(currentUser));
@@ -216,7 +216,6 @@
         };
 
         script.onerror = function() {
-            // Якщо офлайн або сервер не відповів, але пароль 123456 — пускаємо рибалку
             if (pass === "123456") {
                 currentUser = { username: user, role: "user" };
                 localStorage.setItem('cherg_user', JSON.stringify(currentUser));
@@ -293,7 +292,8 @@
             const li = document.createElement('li');
             li.className = 'list-item';
             li.innerHTML = `
-                <span><strong>${idx + 1}.</strong> ${name}</span>${currentUser && currentUser.role === 'admin' ? `<button class="btn-danger btn-sm" onclick="removeFisherman(${idx})">Видалити</button>` : ''}
+                <span><strong>${idx + 1}.</strong> ${name}</span>
+                ${currentUser && currentUser.role === 'admin' ? `<button class="btn-danger btn-sm" onclick="removeFisherman(${idx})">Видалити</button>` : ''}
             `;
             list.appendChild(li);
         });
@@ -325,7 +325,78 @@
     }
 
     function removeFisherman(idx) {
-        if (confirm(`Видалити рибалку ${db.fishermen[idx]}?`)) { db.fishermen.splice(idx, 1); saveLocalData(); renderFishermen(); } }  function generateDefaultSchedule() { db.shifts = []; let fIdx = 0; for (let i = 0; i < 30; i++) { let p1 = db.fishermen[fIdx \% db.fishermen.length]; fIdx++; let p2 = db.fishermen[fIdx \% db.fishermen.length]; fIdx++; db.shifts.push({ dayIndex: i, p1: p1, p2: p2, status: "pending" }); } saveLocalData(); }  function generateSchedule() { const days = parseInt(document.getElementById('genDays').value) \vert{}\vert{} 30; db.shifts = []; let fIdx = 0; for (let i = 0; i < days; i++) { let p1 = db.fishermen[fIdx \% db.fishermen.length]; fIdx++; let p2 = db.fishermen[fIdx \% db.fishermen.length]; fIdx++; db.shifts.push({ dayIndex: i, p1: p1, p2: p2, status: "pending" }); } saveLocalData(); renderSchedule(); alert("Календар успішно згенеровано!"); switchTab('tab-schedule', document.querySelectorAll('.nav-tab')[0]); }  function bookShift(idx, slotNum) { const userName = currentUser.username; const shift = db.shifts[idx];  if (slotNum === 1) { shift.p1 = userName; } else if (slotNum === 2) { shift.p2 = userName; }  saveLocalData(); renderSchedule(); }  // Рендер календаря (картки днів) function renderSchedule() { const container = document.getElementById('calendarContainer'); container.innerHTML = ''; const filter = document.getElementById('filterFisherman').value;  if (!db.shifts \vert{}\vert{} db.shifts.length === 0) { container.innerHTML = '<p>Календар порожній.</p>'; return; }  const start = new Date(db.startDate \vert{}\vert{} Date.now());  db.shifts.forEach((shift, idx) => { if (filter && shift.p1 !== filter && shift.p2 !== filter) return;  const currentDate = new Date(start); currentDate.setDate(start.getDate() + idx); const dateStr = currentDate.toLocaleDateString('uk-UA', { day: '2-digit', month: '2-digit', year: 'numeric', weekday: 'short' });  const card = document.createElement('div'); card.className = `calendar-card ${shift.status}`;
+        if (confirm(`Видалити рибалку ${db.fishermen[idx]}?`)) {
+            db.fishermen.splice(idx, 1);
+            saveLocalData();
+            renderFishermen();
+        }
+    }
+
+    function generateDefaultSchedule() {
+        db.shifts = [];
+        let fIdx = 0;
+        for (let i = 0; i < 30; i++) {
+            let p1 = db.fishermen[fIdx % db.fishermen.length];
+            fIdx++;
+            let p2 = db.fishermen[fIdx % db.fishermen.length];
+            fIdx++;
+            db.shifts.push({ dayIndex: i, p1: p1, p2: p2, status: "pending" });
+        }
+        saveLocalData();
+    }
+
+    function generateSchedule() {
+        const days = parseInt(document.getElementById('genDays').value) || 30;
+        db.shifts = [];
+        let fIdx = 0;
+        for (let i = 0; i < days; i++) {
+            let p1 = db.fishermen[fIdx % db.fishermen.length];
+            fIdx++;
+            let p2 = db.fishermen[fIdx % db.fishermen.length];
+            fIdx++;
+            db.shifts.push({ dayIndex: i, p1: p1, p2: p2, status: "pending" });
+        }
+        saveLocalData();
+        renderSchedule();
+        alert("Календар успішно згенеровано!");
+        switchTab('tab-schedule', document.querySelectorAll('.nav-tab')[0]);
+    }
+
+    function bookShift(idx, slotNum) {
+        const userName = currentUser.username;
+        const shift = db.shifts[idx];
+
+        if (slotNum === 1) {
+            shift.p1 = userName;
+        } else if (slotNum === 2) {
+            shift.p2 = userName;
+        }
+
+        saveLocalData();
+        renderSchedule();
+    }
+
+    function renderSchedule() {
+        const container = document.getElementById('calendarContainer');
+        container.innerHTML = '';
+        const filter = document.getElementById('filterFisherman').value;
+
+        if (!db.shifts || db.shifts.length === 0) {
+            container.innerHTML = '<p>Календар порожній.</p>';
+            return;
+        }
+
+        const start = new Date(db.startDate || Date.now());
+
+        db.shifts.forEach((shift, idx) => {
+            if (filter && shift.p1 !== filter && shift.p2 !== filter) return;
+
+            const currentDate = new Date(start);
+            currentDate.setDate(start.getDate() + idx);
+            const dateStr = currentDate.toLocaleDateString('uk-UA', { day: '2-digit', month: '2-digit', year: 'numeric', weekday: 'short' });
+
+            const card = document.createElement('div');
+            card.className = `calendar-card ${shift.status}`;
 
             let statusText = '⏳ Очікується';
             if (shift.status === 'done') statusText = '✓ Відчергували';
@@ -338,4 +409,75 @@
                         <select onchange="updateShiftStatus(${idx}, this.value)" style="padding:4px; font-size:12px; width:100%;">
                             <option value="pending" ${shift.status==='pending'?'selected':''}>Статус: Очікується</option>
                             <option value="done" ${shift.status==='done'?'selected':''}>✓ Відчергували</option>
-                            <option value="miss
+                            <option value="missed" ${shift.status==='missed'?'selected':''}>✕ Пропустили</option>
+                        </select>
+                    </div>
+                `;
+            }
+
+            // Кнопки бронювання доступні всім на вільні місця, але адмін головний у всьому
+            card.innerHTML = `
+                <div>
+                    <div class="cal-date">
+                        <span>📅 ${dateStr}</span>
+                        <span style="font-size: 11px; font-weight: normal; color: #555;">${statusText}</span>
+                    </div>
+                    <div class="cal-slot">
+                        <span>1. <b>${shift.p1 || 'Вільне'}</b></span>
+                        ${!shift.p1 || shift.p1 === 'Вільне' ? `<button class="btn-book" onclick="bookShift(${idx}, 1)">Зайняти</button>` : ''}
+                    </div>
+                    <div class="cal-slot">
+                        <span>2. <b>${shift.p2 || 'Вільне (1 черговий)'}</b></span>
+                        ${!shift.p2 || shift.p2 === 'Вільне' ? `<button class="btn-book" style="background:#52b788;" onclick="bookShift(${idx}, 2)">Зайняти</button>` : ''}
+                    </div>
+                </div>
+                ${adminControls}
+            `;
+            container.appendChild(card);
+        });
+    }
+
+    function updateShiftStatus(idx, val) {
+        db.shifts[idx].status = val;
+        saveLocalData();
+    }
+
+    function saveToCloud() {
+        const status = document.getElementById('syncStatus');
+        status.innerText = "Збереження в Google Таблицю...";
+        const script = document.createElement('script');
+        script.src = `${SCRIPT_URL}?action=save&db=${encodeURIComponent(JSON.stringify(db))}`;
+        script.onload = () => { status.innerText = "✅ Успішно збережено!"; if(script.parentNode)document.body.removeChild(script); };
+        script.onerror = () => { status.innerText = "❌ Помилка збереження."; if(script.parentNode)document.body.removeChild(script); };
+        document.body.appendChild(script);
+    }
+
+    function loadFromCloud() {
+        const status = document.getElementById('syncStatus');
+        status.innerText = "Завантаження...";
+        fetch(SCRIPT_URL)
+            .then(res => res.json())
+            .then(data => {
+                if (data && data.fishermen) {
+                    db = data;
+                    saveLocalData();
+                    renderFishermen();
+                    renderSchedule();
+                    status.innerText = "✅ Дані завантажено!";
+                } else {
+                    status.innerText = "У таблиці порожньо.";
+                }
+            })
+            .catch(() => status.innerText = "Помилка зв'язку.");
+    }
+
+    window.onload = function() {
+        const savedUser = localStorage.getItem('cherg_user');
+        if (savedUser) {
+            try { currentUser = JSON.parse(savedUser); initApp(); } catch(e) { logout(); }
+        }
+    };
+</script>
+
+</body>
+</html>
