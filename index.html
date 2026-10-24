@@ -41,7 +41,7 @@
         .nav-tab { flex: 1; min-width: 90px; text-align: center; padding: 10px 8px; background: #e9ecef; border-radius: 10px; font-weight: 600; font-size: 13px; cursor: pointer; color: #495057; border: none; white-space: nowrap; }
         .nav-tab.active { background: var(--accent); color: white; }
 
-        /* Стилі календаря (сітка) */
+        /* Стилі календаря */
         .calendar-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 14px; margin-top: 15px; }
         .calendar-card { background: #fff; border: 1px solid var(--border); border-radius: 12px; padding: 14px; box-shadow: 0 2px 6px rgba(0,0,0,0.02); display: flex; flex-direction: column; justify-content: space-between; }
         .calendar-card.done { border-left: 6px solid var(--success); background: #f4faf6; }
@@ -63,7 +63,7 @@
 <body>
 
 <div class="container">
-    <!-- АВТОРИЗАЦІЯ (Без жодних згадок паролів для сторонніх) -->
+    <!-- АВТОРИЗАЦІЯ -->
     <div id="login-section" class="auth-container">
         <h2>🎣 Водойма Торчин</h2>
         <p style="text-align: center; font-size: 13px; color: #666; margin-bottom: 20px;">Вхід у систему чергувань</p>
@@ -91,15 +91,15 @@
         <div class="nav-tabs">
             <button class="nav-tab active" onclick="switchTab('tab-schedule', this)">📅 Календар чергувань</button>
             <button class="nav-tab" onclick="switchTab('tab-fishermen', this)">👥 Рибалки (<span id="fishCount">0</span>)</button>
-            <button class="nav-tab admin-only" onclick="switchTab('tab-generator', this)">⚙️ Генератор</button>
+            <button class="nav-tab admin-only" onclick="switchTab('tab-generator', this)">⚙️ Генератор (Адмін)</button>
             <button class="nav-tab" onclick="switchTab('tab-sync', this)">🔄 Синхронізація</button>
         </div>
 
         <!-- ВКЛАДКА 1: КАЛЕНДАР ТА БРОНЮВАННЯ -->
         <div id="tab-schedule" class="tab-content">
-            <h3>📅 Календар чергувань на водоймі</h3>
+            <h3>📅 Календар чергувань (Самостійний запис)</h3>
             <div class="card">
-                <p style="font-size: 13px; color: #555; margin-top:0;">Ви можете обрати вільну дату та натиснути **«Зайняти»**, щоб записатися на чергування.</p>
+                <p style="font-size: 13px; color: #555; margin-top:0;">Оберіть вільну дату та натисніть кнопку **«Забронювати»**, щоб записатися на чергування.</p>
                 <div class="grid-2">
                     <div>
                         <label>Дата початку місяця:</label>
@@ -133,14 +133,14 @@
 
         <!-- ВКЛАДКА 3: ГЕНЕРАТОР (Лише для Адміна) -->
         <div id="tab-generator" class="tab-content hidden admin-only">
-            <h3>⚙️ Генератор місячного графіку</h3>
+            <h3>⚙️ Генератор порожнього календаря</h3>
             <div class="card">
-                <p style="font-size: 14px; color: #555;">Автоматично розподіляє рибалок по 2 на добу.</p>
+                <p style="font-size: 14px; color: #555;">Створює сітку порожніх днів на обрану кількість днів, щоб учасники могли самі займати зручні дати.</p>
                 <div class="form-group">
                     <label>Кількість днів:</label>
                     <input type="number" id="genDays" value="30" min="1" max="90">
                 </div>
-                <button onclick="generateSchedule()">Згенерувати новий графік</button>
+                <button onclick="generateEmptySchedule()">Створити порожній календар</button>
             </div>
         </div>
 
@@ -148,7 +148,7 @@
         <div id="tab-sync" class="tab-content hidden">
             <h3>🔄 Хмарна синхронізація</h3>
             <div class="card">
-                <p style="font-size: 14px; color: #555;">Зберігайте заброньовані дати та зміни у вашу Google Таблицю.</p>
+                <p style="font-size: 14px; color: #555;">Зберігайте заброньовані дати та відмітки у вашу Google Таблицю.</p>
                 <button onclick="saveToCloud()" style="margin-bottom: 10px;">☁️ Зберегти в Google Таблицю</button>
                 <button class="btn-secondary" onclick="loadFromCloud()">📥 Завантажити з Таблиці</button>
                 <div id="syncStatus" class="status-msg"></div>
@@ -188,7 +188,6 @@
             return;
         }
 
-        // Перевірка для рибалок за універсальним паролем "123456" (або ваш власний, який ви їм дасте)
         if (pass === "123456" && user.toLowerCase() !== "admin") {
             currentUser = { username: user, role: "user" };
             localStorage.setItem('cherg_user', JSON.stringify(currentUser));
@@ -254,7 +253,7 @@
         loadLocalData();
         renderFishermen();
         updateFishermenDropdown();
-        if (db.shifts.length === 0) generateDefaultSchedule();
+        if (db.shifts.length === 0) generateEmptySchedule(30);
         renderSchedule();
     }
 
@@ -332,33 +331,16 @@
         }
     }
 
-    function generateDefaultSchedule() {
-        db.shifts = [];
-        let fIdx = 0;
-        for (let i = 0; i < 30; i++) {
-            let p1 = db.fishermen[fIdx % db.fishermen.length];
-            fIdx++;
-            let p2 = db.fishermen[fIdx % db.fishermen.length];
-            fIdx++;
-            db.shifts.push({ dayIndex: i, p1: p1, p2: p2, status: "pending" });
-        }
-        saveLocalData();
-    }
-
-    function generateSchedule() {
+    // Створення ПОРУШЕНИХ (порожніх) днів для бронювання
+    function generateEmptySchedule() {
         const days = parseInt(document.getElementById('genDays').value) || 30;
         db.shifts = [];
-        let fIdx = 0;
         for (let i = 0; i < days; i++) {
-            let p1 = db.fishermen[fIdx % db.fishermen.length];
-            fIdx++;
-            let p2 = db.fishermen[fIdx % db.fishermen.length];
-            fIdx++;
-            db.shifts.push({ dayIndex: i, p1: p1, p2: p2, status: "pending" });
+            db.shifts.push({ dayIndex: i, p1: "", p2: "", status: "pending" });
         }
         saveLocalData();
         renderSchedule();
-        alert("Календар успішно згенеровано!");
+        alert("Створено порожній календар для бронювання!");
         switchTab('tab-schedule', document.querySelectorAll('.nav-tab')[0]);
     }
 
@@ -367,9 +349,17 @@
         const shift = db.shifts[idx];
 
         if (slotNum === 1) {
-            shift.p1 = userName;
+            if (shift.p1 && shift.p1 !== userName && currentUser.role !== 'admin') {
+                alert("Це місце вже зайняте іншим рибалкою!");
+                return;
+            }
+            shift.p1 = (shift.p1 === userName) ? "" : userName; // Якщо клікнув знову — скасовує бронювання
         } else if (slotNum === 2) {
-            shift.p2 = userName;
+            if (shift.p2 && shift.p2 !== userName && currentUser.role !== 'admin') {
+                alert("Це місце вже зайняте іншим рибалкою!");
+                return;
+            }
+            shift.p2 = (shift.p2 === userName) ? "" : userName;
         }
 
         saveLocalData();
@@ -382,7 +372,7 @@
         const filter = document.getElementById('filterFisherman').value;
 
         if (!db.shifts || db.shifts.length === 0) {
-            container.innerHTML = '<p>Календар порожній.</p>';
+            container.innerHTML = '<p>Календар порожній. Адмін може згенерувати його у відповідній вкладці.</p>';
             return;
         }
 
@@ -402,12 +392,14 @@
             if (shift.status === 'done') statusText = '✓ Відчергували';
             if (shift.status === 'missed') statusText = '✕ Пропустили';
 
+            // Адмін може керувати статусами (хто чергував / хто пропустив)
             let adminControls = '';
             if (currentUser.role === 'admin') {
                 adminControls = `
-                    <div style="margin-top: 8px;">
+                    <div style="margin-top: 8px; border-top: 1px dashed #ddd; padding-top: 6px;">
+                        <label style="font-size:11px; margin-bottom:2px;">Статус чергування (Адмін):</label>
                         <select onchange="updateShiftStatus(${idx}, this.value)" style="padding:4px; font-size:12px; width:100%;">
-                            <option value="pending" ${shift.status==='pending'?'selected':''}>Статус: Очікується</option>
+                            <option value="pending" ${shift.status==='pending'?'selected':''}>⏳ Очікується</option>
                             <option value="done" ${shift.status==='done'?'selected':''}>✓ Відчергували</option>
                             <option value="missed" ${shift.status==='missed'?'selected':''}>✕ Пропустили</option>
                         </select>
@@ -415,20 +407,26 @@
                 `;
             }
 
-            // Кнопки бронювання доступні всім на вільні місця, але адмін головний у всьому
+            // Кнопки бронювання для учасників (або скасування свого запису)
+            let p1Text = shift.p1 ? `<b>${shift.p1}</b>` : '<span style="color:#aaa">Вільне місце</span>';
+            let p2Text = shift.p2 ? `<b>${shift.p2}</b>` : '<span style="color:#aaa">Вільне місце</span>';
+
+            let btn1Text = (shift.p1 === currentUser.username) ? 'Скасувати' : 'Забронювати';
+            let btn2Text = (shift.p2 === currentUser.username) ? 'Скасувати' : 'Забронювати';
+
             card.innerHTML = `
                 <div>
                     <div class="cal-date">
                         <span>📅 ${dateStr}</span>
-                        <span style="font-size: 11px; font-weight: normal; color: #555;">${statusText}</span>
+                        <span style="font-size: 11px; font-weight: bold; color: ${shift.status==='done'?'#2a9d8f':(shift.status==='missed'?'#e63946':'#b5838d')}">${statusText}</span>
                     </div>
                     <div class="cal-slot">
-                        <span>1. <b>${shift.p1 || 'Вільне'}</b></span>
-                        ${!shift.p1 || shift.p1 === 'Вільне' ? `<button class="btn-book" onclick="bookShift(${idx}, 1)">Зайняти</button>` : ''}
+                        <span>1. ${p1Text}</span>
+                        <button class="btn-book" style="background:${shift.p1===currentUser.username?'#e63946':'#3a86ff'}" onclick="bookShift(${idx}, 1)">${btn1Text}</button>
                     </div>
                     <div class="cal-slot">
-                        <span>2. <b>${shift.p2 || 'Вільне (1 черговий)'}</b></span>
-                        ${!shift.p2 || shift.p2 === 'Вільне' ? `<button class="btn-book" style="background:#52b788;" onclick="bookShift(${idx}, 2)">Зайняти</button>` : ''}
+                        <span>2. ${p2Text}</span>
+                        <button class="btn-book" style="background:${shift.p2===currentUser.username?'#e63946':'#52b788'}" onclick="bookShift(${idx}, 2)">${btn2Text}</button>
                     </div>
                 </div>
                 ${adminControls}
