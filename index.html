@@ -82,6 +82,7 @@
 
         .btn-green { background: var(--accent-green); }
         .btn-danger { background: var(--danger); }
+        .btn-orange { background: var(--accent-orange); }
 
         .hidden { display: none !important; }
 
@@ -122,6 +123,7 @@
             display: flex;
             gap: 5px;
             margin-bottom: 15px;
+            overflow-x: auto;
         }
 
         .nav-tab {
@@ -134,7 +136,7 @@
             cursor: pointer;
             font-weight: 600;
             color: var(--text-muted);
-            font-size: 13px;
+            font-size: 12px;
             white-space: nowrap;
         }
 
@@ -270,7 +272,7 @@
         <div id="login-error" class="alert hidden">Невірний логін або пароль</div>
         <div class="form-group">
             <label for="username">Логін (Прізвище та Ім'я або admin):</label>
-            <input type="text" id="username" placeholder="Наприклад: admin або Петренко Тарас">
+            <input type="text" id="username" placeholder="Наприклад: admin або Улітовський Тарас">
         </div>
         <div class="form-group">
             <label for="password">Пароль:</label>
@@ -289,8 +291,9 @@
         <!-- Меню вкладок -->
         <div class="nav-tabs">
             <div class="nav-tab active" onclick="switchTab('calendar', event)">📅 Календар</div>
-            <div class="nav-tab" onclick="switchTab('stats', event)">📊 Хто вартував</div>
-            <div id="admin-tab-btn" class="nav-tab hidden" onclick="switchTab('admin', event)">⚙️ Адмін (<span id="pending-count">0</span>)</div>
+            <div class="nav-tab" onclick="switchTab('stats', event)">📊 Вартував</div>
+            <div id="admin-tab-btn" class="nav-tab hidden" onclick="switchTab('admin', event)">⚙️ Заявки (<span id="pending-count">0</span>)</div>
+            <div id="settings-tab-btn" class="nav-tab hidden" onclick="switchTab('settings', event)">👥 Рибалки</div>
         </div>
 
         <!-- ВКЛАДКА 1: КАЛЕНДАР НА МІСЯЦЬ -->
@@ -322,10 +325,26 @@
             <div id="fishermen-stats-list" style="max-height: 380px; overflow-y: auto; padding-right: 3px; margin-top: 10px;"></div>
         </div>
 
-        <!-- ВКЛАДКА 3: АДМІНІСТРУВАННЯ -->
+        <!-- ВКЛАДКА 3: АДМІНІСТРУВАННЯ ЗАЯВОК -->
         <div id="tab-admin" class="tab-content hidden">
             <h3>🛡️ Підтвердження бронювань</h3>
-            <div id="admin-requests-list" style="margin-top: 10px;"></div>
+            <div style="margin-bottom: 15px; text-align: right;">
+                <button class="btn-danger" style="width: auto; padding: 6px 12px; font-size: 12px;" onclick="clearCorruptedShifts()">🗑️ Очистити биті/порожні дані</button>
+            </div>
+            <div id="admin-requests-list"></div>
+        </div>
+
+        <!-- ВКЛАДКА 4: КЕРУВАННЯ СПИСКОМ РИБАЛОК -->
+        <div id="tab-settings" class="tab-content hidden">
+            <h3>👥 Редагування списку рибалок</h3>
+            <p style="font-size: 12px; color: var(--text-muted); text-align: center;">Додайте нових або видаліть зайвих рибалок:</p>
+            
+            <div class="form-group" style="display: flex; gap: 8px; margin-top: 10px;">
+                <input type="text" id="new-fisherman-input" placeholder="Прізвище Ім'я нового рибалки" style="margin: 0;">
+                <button class="btn-green" style="width: auto; margin: 0; padding: 10px 15px;" onclick="addFisherman()">Додати</button>
+            </div>
+
+            <div id="fishermen-manage-list" style="max-height: 320px; overflow-y: auto; margin-top: 15px;"></div>
         </div>
     </div>
 </div>
@@ -358,16 +377,51 @@
 <script>
     const API_URL = "https://script.google.com/macros/s/AKfycbxMsstUmnOmFGL98PbhPeucsspzhTOqxo4vZVvxBAwO2-KbJEzWQuxQG5Vkk54Te53IJg/exec";
 
+    // Повний актуальний список рибалок водойми Торчин
     let appData = {
         fishermen: [
-            "Петренко Тарас", "Вовк Олександр", "Замелюк Володимир", "Стоянович Олександр", "Біда Павло",
-            "Ковальчук Іван", "Борисюк Андрій", "Грицюк Микола", "Панасюк Сергій", "Левчук Олег",
-            "Марчук Василь", "Климюк Дмитро", "Шевчук Віктор", "Романюк Петро", "Онюк Степан",
-            "Савчук Михайло", "Демчук Юрій", "Павлюк Анатолій", "Гончарук Василь", "Ткачук Микола",
-            "Коваль Павло", "Бондар Олег", "Мельник Іван", "Олійник Віктор", "Кравець Андрій",
-            "Поліщук Сергій", "Ящук Дмитро", "Сидорчук Василь", "Козак Петро", "Ващук Михайло",
-            "Руденко Юрій", "Литвинюк Анатолій", "Пасічник Степан", "Гнатюк Олег", "Терещук Іван",
-            "Матвійчук Василь", "Дчук Микола", "Шеремета Павло", "Кузьмич Андрій", "Федорчук Сергій"
+            "Вовк Саша",
+            "Замелюк Володимир",
+            "Стоянович Саша (стар)",
+            "Біда Павло",
+            "Андрій Хілюк",
+            "Зінчук Міша",
+            "Карпук Валерій",
+            "Лопухович Сергій",
+            "Кондисюк Саша",
+            "Дідич Сергій",
+            "Бойко Руслан Іванович",
+            "Дорощук Богдан",
+            "Микола Вавринчук",
+            "Рогацько Віталій",
+            "Богдан Келер",
+            "Сачковський Саша",
+            "Стоянович Іван",
+            "Саша Трохимович",
+            "Тлучкевич Олег",
+            "Назарко Ігор",
+            "Вовк Віктор",
+            "Михайлюк Омелян",
+            "Міщук Анатолій",
+            "Санчик Петро",
+            "Пилипчук Віктор",
+            "Кузьмінчук Олександр",
+            "Ліпич Богдан",
+            "Бомазюк Григорій Полікарпович",
+            "Олексюк Олександр",
+            "Бохонський Микола",
+            "Порва Віктор",
+            "Тлучкевич Валентин",
+            "Гвоздик Володимир",
+            "Улітовський Тарас",
+            "Неволін Ігор",
+            "Ахметов Михайло",
+            "Хавань Борис",
+            "Грищук Віктор",
+            "Назарук Віталій",
+            "Купцов Леонід",
+            "Піцик Сергій",
+            "Харитонов Володимир"
         ],
         shifts: []
     };
@@ -424,8 +478,10 @@
 
         if (currentUser.role === "admin") {
             document.getElementById("admin-tab-btn").classList.remove("hidden");
+            document.getElementById("settings-tab-btn").classList.remove("hidden");
         } else {
             document.getElementById("admin-tab-btn").classList.add("hidden");
+            document.getElementById("settings-tab-btn").classList.add("hidden");
         }
 
         loadAppData();
@@ -478,6 +534,10 @@
             document.getElementById('tab-admin').classList.remove('hidden');
             document.getElementById('admin-tab-btn').classList.add('active');
             renderAdminRequests();
+        } else if (tabName === 'settings') {
+            document.getElementById('tab-settings').classList.remove('hidden');
+            document.getElementById('settings-tab-btn').classList.add('active');
+            renderFishermenList();
         }
     }
 
@@ -512,14 +572,15 @@
 
             let htmlContent = `<div class="cal-date-num">${day}</div>`;
             
-            if (shift) {
-                // Виводимо Прізвище та Ім'я повністю (без скорочення)
-                let displayGuards = shift.guard2 ? `${shift.guard1}<br>${shift.guard2}` : `${shift.guard1}`;
+            if (shift && shift.guard1 && shift.guard1 !== "undefined") {
+                let g1Short = shift.guard1.split(' ')[0];
+                let g2Short = shift.guard2 ? shift.guard2.split(' ')[0] : '';
+                let displayGuards = shift.guard2 ? `${g1Short}<br>${g2Short}` : `${g1Short}`;
 
                 if (shift.status === 'confirmed') {
                     htmlContent += `<div class="shift-badge badge-confirmed" title="Сторожують: ${shift.guard1} ${shift.guard2 ? 'та ' + shift.guard2 : ''}">🛡️ ${displayGuards}</div>`;
                 } else {
-                    htmlContent += `<div class="shift-badge badge-pending" title="Очікує підтвердження">⏳ ${shift.guard1}</div>`;
+                    htmlContent += `<div class="shift-badge badge-pending" title="Очікує підтвердження">⏳ ${g1Short}</div>`;
                 }
             }
 
@@ -528,7 +589,7 @@
             container.appendChild(cell);
         }
 
-        let pendingCount = appData.shifts.filter(s => s.status === 'pending').length;
+        let pendingCount = appData.shifts.filter(s => s.status === 'pending' && s.guard1 && s.guard1 !== "undefined").length;
         document.getElementById("pending-count").innerText = pendingCount;
     }
 
@@ -561,9 +622,9 @@
 
         if (currentUser && currentUser.role === 'admin') {
             primarySelect.disabled = false;
-            primarySelect.value = appData.fishermen[0];
+            if (appData.fishermen.length > 0) primarySelect.value = appData.fishermen[0];
         } else {
-            primarySelect.value = currentUser ? currentUser.username : appData.fishermen[0];
+            primarySelect.value = currentUser ? currentUser.username : (appData.fishermen[0] || "");
             primarySelect.disabled = true;
         }
 
@@ -575,7 +636,7 @@
         let existingAdminBtns = document.getElementById("modal-admin-actions");
         if (existingAdminBtns) existingAdminBtns.remove();
 
-        if (existingShift) {
+        if (existingShift && existingShift.guard1 && existingShift.guard1 !== "undefined") {
             let guardsText = existingShift.guard2 ? `${existingShift.guard1} та ${existingShift.guard2}` : `${existingShift.guard1} (один)`;
             
             if (existingShift.status === 'confirmed') {
@@ -634,6 +695,8 @@
             return;
         }
 
+        appData.shifts = appData.shifts.filter(s => s.date !== selectedDateStr);
+
         let statusVal = (currentUser && currentUser.role === 'admin') ? 'confirmed' : 'pending';
 
         appData.shifts.push({
@@ -648,6 +711,60 @@
         alert(currentUser && currentUser.role === 'admin' ? "Варту успішно призначено!" : "Бронювання надіслано на підтвердження!");
     }
 
+    function renderFishermenList() {
+        const container = document.getElementById("fishermen-manage-list");
+        container.innerHTML = "";
+
+        if (appData.fishermen.length === 0) {
+            container.innerHTML = `<p style="text-align: center; color: var(--text-muted); font-size: 13px;">Список рибалок порожній.</p>`;
+            return;
+        }
+
+        appData.fishermen.forEach((f, index) => {
+            let card = document.createElement("div");
+            card.className = "stats-card";
+            card.innerHTML = `
+                <span style="font-size: 13px;"><b>${f}</b></span>
+                <button class="btn-danger" style="width: auto; margin: 0; padding: 4px 8px; font-size: 12px;" onclick="removeFisherman(${index})">Видалити</button>
+            `;
+            container.appendChild(card);
+        });
+    }
+
+    function addFisherman() {
+        let nameInput = document.getElementById("new-fisherman-input");
+        let name = nameInput.value.trim();
+        if (!name) {
+            alert("Введіть ім'я рибалки!");
+            return;
+        }
+        if (appData.fishermen.includes(name)) {
+            alert("Такий рибалка вже є у списку!");
+            return;
+        }
+
+        appData.fishermen.push(name);
+        nameInput.value = "";
+        saveToCloud();
+        renderFishermenList();
+        alert("Рибалку успішно додано!");
+    }
+
+    function removeFisherman(index) {
+        if (confirm("Ви дійсно хочете видалити цього рибалку?")) {
+            appData.fishermen.splice(index, 1);
+            saveToCloud();
+            renderFishermenList();
+        }
+    }
+
+    function clearCorruptedShifts() {
+        appData.shifts = appData.shifts.filter(s => s && s.date && s.guard1 && s.guard1 !== "undefined");
+        saveToCloud();
+        alert("Браковані/биті записи успішно видалено з бази!");
+        renderAll();
+    }
+
     function renderStats() {
         const container = document.getElementById("fishermen-stats-list");
         container.innerHTML = "";
@@ -656,81 +773,12 @@
         appData.fishermen.forEach(f => counts[f] = 0);
 
         appData.shifts.forEach(s => {
-            if (s.status === 'confirmed') {
-                if (s.guard1 && counts[s.guard1] !== undefined) counts[s.guard1]++;
+            if (s.status === 'confirmed' && s.guard1 && s.guard1 !== "undefined") {
+                if (counts[s.guard1] !== undefined) counts[s.guard1]++;
                 if (s.guard2 && counts[s.guard2] !== undefined) counts[s.guard2]++;
             }
         });
 
         appData.fishermen.forEach(f => {
             let total = counts[f] || 0;
-            let card = document.createElement("div");
-            card.className = "stats-card";
-            
-            let badgeHtml = total > 0 
-                ? `<span class="badge-count count-done">🛡️ Вартостей: ${total}</span>` 
-                : `<span class="badge-count count-none">⚠️ Ще ні</span>`;
-
-            card.innerHTML = `<span style="font-size: 13px;"><b>${f}</b></span>${badgeHtml}`;
-            container.appendChild(card);
-        });
-    }
-
-    function renderAdminRequests() {
-        const container = document.getElementById("admin-requests-list");
-        container.innerHTML = "";
-
-        let pendingShifts = appData.shifts.filter(s => s.status === 'pending');
-
-        if (pendingShifts.length === 0) {
-            container.innerHTML = `<p style="text-align: center; color: var(--text-muted); margin-top: 15px; font-size: 13px;">Немає нових заяв на бронювання.</p>`;
-            return;
-        }
-
-        pendingShifts.forEach(shift => {
-            let card = document.createElement("div");
-            card.className = "stats-card";
-            card.style.flexDirection = "column";
-            card.style.alignItems = "flex-start";
-            card.style.gap = "6px";
-
-            let guardsText = shift.guard2 ? `${shift.guard1} та ${shift.guard2}` : `${shift.guard1} (один)`;
-
-            card.innerHTML = `
-                <div style="font-size: 13px;">📅 Дата: <b>${shift.date}</b></div>
-                <div style="font-size: 13px;">🎣 Хто заступає: <b>${guardsText}</b></div>
-                <div style="display: flex; gap: 8px; width: 100%; margin-top: 4px;">
-                    <button class="btn-green" style="margin:0; padding: 8px; font-size: 13px;" onclick="confirmShift('${shift.date}')">Підтвердити</button>
-                    <button class="btn-danger" style="margin:0; padding: 8px; font-size: 13px;" onclick="rejectShift('${shift.date}')">Відхилити</button>
-                </div>
-            `;
-            container.appendChild(card);
-        });
-    }
-
-    function confirmShift(dateStr) {
-        let shift = appData.shifts.find(s => s.date === dateStr);
-        if (shift) {
-            shift.status = 'confirmed';
-            saveToCloud();
-            closeModal();
-            alert("Варту успішно підтверджено!");
-        }
-    }
-
-    function rejectShift(dateStr) {
-        appData.shifts = appData.shifts.filter(s => s.date !== dateStr);
-        saveToCloud();
-        closeModal();
-        alert("Заявку відхилено / варту скасовано.");
-    }
-
-    function renderAll() {
-        renderCalendar();
-        if (!document.getElementById("tab-stats").classList.contains("hidden")) renderStats();
-        if (!document.getElementById("tab-admin").classList.contains("hidden")) renderAdminRequests();
-    }
-</script>
-
-</body>
-</html>
+            let card
