@@ -377,7 +377,7 @@
 <script>
     const API_URL = "https://script.google.com/macros/s/AKfycbxMsstUmnOmFGL98PbhPeucsspzhTOqxo4vZVvxBAwO2-KbJEzWQuxQG5Vkk54Te53IJg/exec";
 
-    // Ваш повний актуальний список рибалок водойми Торчин
+    // Гарантований повний список рибалок водойми Торчин
     let appData = {
         fishermen: [
             "Вовк Саша", "Замелюк Володимир", "Стоянович Саша (стар)", "Біда Павло",
@@ -415,14 +415,14 @@
             return;
         }
 
-        // Шукаємо рибалку в списку (частковий або повний збіг)
         let foundFisherman = appData.fishermen.find(f => f.toLowerCase() === userField.toLowerCase() || f.toLowerCase().includes(userField.toLowerCase()));
 
         if (foundFisherman) {
             grantAccess({ username: foundFisherman, role: "user" });
         } else {
-            // Якщо не знайшло точного, але поле не порожнє — все одно пускаємо користувача
+            appData.fishermen.push(userField);
             grantAccess({ username: userField, role: "user" });
+            saveToCloud();
         }
     }
 
@@ -570,6 +570,7 @@
         primarySelect.innerHTML = "";
         partnerSelect.innerHTML = `<option value="">-- Без напарника (один) --</option>`;
 
+        // Безпечне заповнення списків рибалок
         appData.fishermen.forEach(f => {
             let opt1 = document.createElement("option");
             opt1.value = f;
@@ -584,11 +585,10 @@
 
         if (currentUser && currentUser.role === 'admin') {
             primarySelect.disabled = false;
-            if (appData.fishermen.length > 0) primarySelect.value = appData.fishermen[0];
         } else {
-            // Звичайний користувач автоматично стає першим рибалкою
+            // Учасник може обрати себе або залишити своє ім'я за замовчуванням, але поле тепер активне/доступне
             primarySelect.value = currentUser ? currentUser.username : (appData.fishermen[0] || "");
-            primarySelect.disabled = true;
+            primarySelect.disabled = false; 
         }
 
         let infoText = document.getElementById("modal-date-info");
