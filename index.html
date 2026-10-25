@@ -23,52 +23,47 @@
             background-color: var(--bg-color);
             color: var(--text);
             margin: 0;
-            padding: 10px;
+            padding: 5px;
         }
 
         .container {
             max-width: 800px;
-            margin: 20px auto;
+            margin: 10px auto;
             background: var(--card-bg);
-            padding: 25px;
-            border-radius: 16px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+            padding: 15px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
             border: 1px solid var(--border);
         }
 
         h2, h3, h4 {
             text-align: center;
             color: var(--accent);
-            letter-spacing: 0.5px;
+            margin-top: 10px;
         }
 
         .form-group {
-            margin-bottom: 15px;
+            margin-bottom: 12px;
         }
 
         label {
             display: block;
-            margin-bottom: 6px;
+            margin-bottom: 4px;
             font-weight: 600;
             color: var(--text);
+            font-size: 14px;
         }
 
         input, select, button {
             width: 100%;
-            padding: 12px;
+            padding: 10px;
             box-sizing: border-box;
             background: #f8fafc;
             border: 1px solid var(--border);
             color: var(--text);
             border-radius: 8px;
-            font-size: 16px;
+            font-size: 15px;
             outline: none;
-        }
-
-        input:focus, select:focus {
-            border-color: var(--accent);
-            background: #fff;
-            box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.15);
         }
 
         button {
@@ -78,55 +73,60 @@
             cursor: pointer;
             font-weight: bold;
             transition: 0.2s;
-            margin-top: 10px;
+            margin-top: 8px;
         }
 
-        button:hover {
-            background: var(--accent-hover);
-            transform: translateY(-1px);
+        button:active {
+            transform: scale(0.98);
         }
 
         .btn-green { background: var(--accent-green); }
-        .btn-green:hover { background: #059669; }
-        
         .btn-danger { background: var(--danger); }
-        .btn-danger:hover { background: #dc2626; }
 
         .hidden { display: none !important; }
 
         .alert {
-            padding: 12px;
+            padding: 10px;
             background-color: #fee2e2;
             border: 1px solid #f87171;
             color: #991b1b;
             border-radius: 8px;
-            margin-bottom: 15px;
+            margin-bottom: 12px;
             text-align: center;
+            font-size: 14px;
             font-weight: 600;
         }
 
         .user-header {
             display: flex;
-            justify-content: space-between;
-            align-items: center;
+            flex-direction: column;
+            gap: 8px;
             background: #e0f2fe;
-            padding: 12px 15px;
-            border-radius: 10px;
+            padding: 10px 12px;
+            border-radius: 8px;
             border: 1px solid #bae6fd;
-            margin-bottom: 20px;
+            margin-bottom: 15px;
+            font-size: 14px;
+            text-align: center;
+        }
+
+        @media (min-width: 480px) {
+            .user-header {
+                flex-direction: row;
+                justify-content: space-between;
+                text-align: left;
+            }
         }
 
         .nav-tabs {
             display: flex;
-            gap: 8px;
-            margin-bottom: 20px;
-            overflow-x: auto;
-            padding-bottom: 5px;
+            gap: 5px;
+            margin-bottom: 15px;
         }
 
         .nav-tab {
             flex: 1;
-            padding: 10px 15px;
+            padding: 8px 6px;
             background: #f1f5f9;
             border: 1px solid var(--border);
             text-align: center;
@@ -134,13 +134,8 @@
             cursor: pointer;
             font-weight: 600;
             color: var(--text-muted);
+            font-size: 13px;
             white-space: nowrap;
-            transition: 0.2s;
-        }
-
-        .nav-tab:hover {
-            background: #e2e8f0;
-            color: var(--text);
         }
 
         .nav-tab.active {
@@ -153,42 +148,44 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 15px;
+            margin-bottom: 10px;
+        }
+
+        .calendar-header button {
+            padding: 6px 10px;
+            font-size: 13px;
+            width: auto;
+            margin: 0;
         }
 
         .calendar-grid {
             display: grid;
             grid-template-columns: repeat(7, 1fr);
-            gap: 6px;
+            gap: 5px;
         }
 
         .calendar-day-name {
             text-align: center;
             font-weight: bold;
             color: var(--text-muted);
-            font-size: 14px;
-            padding-bottom: 5px;
+            font-size: 12px;
+            padding-bottom: 4px;
         }
 
+        /* Роббимо сітку днів квадратною та адаптивною */
         .cal-day {
             background: #f8fafc;
             border: 1px solid var(--border);
             border-radius: 8px;
-            min-height: 90px;
-            padding: 5px;
-            font-size: 11px;
+            aspect-ratio: 1 / 1; /* Робить клітинку строго квадратною */
+            padding: 4px;
+            font-size: 9px;
             position: relative;
             cursor: pointer;
             display: flex;
             flex-direction: column;
-            justify-content: space-between;
-            transition: 0.2s;
-        }
-
-        .cal-day:hover {
-            border-color: var(--accent);
-            background: #fff;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            justify-content: flex-start;
+            overflow: hidden;
         }
 
         .cal-day.empty {
@@ -200,17 +197,21 @@
         .cal-date-num {
             font-weight: bold;
             color: var(--text);
-            font-size: 13px;
+            font-size: 11px;
+            margin-bottom: 2px;
         }
 
         .shift-badge {
-            font-size: 10px;
-            padding: 3px 4px;
+            font-size: 8px;
+            padding: 2px 3px;
             border-radius: 4px;
-            margin-top: 2px;
-            line-height: 1.2;
+            line-height: 1.1;
             font-weight: 600;
-            word-break: break-word;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            display: -webkit-box;
+            -webkit-line-clamp: 3; /* Обмежує текст до 3 рядків */
+            -webkit-box-orient: vertical;
         }
 
         .badge-pending { background: #fef3c7; color: #b45309; border: 1px solid #f59e0b; }
@@ -219,18 +220,19 @@
         .stats-card {
             background: #f8fafc;
             border: 1px solid var(--border);
-            border-radius: 10px;
-            padding: 12px 15px;
-            margin-bottom: 10px;
+            border-radius: 8px;
+            padding: 10px 12px;
+            margin-bottom: 8px;
             display: flex;
             justify-content: space-between;
             align-items: center;
+            font-size: 14px;
         }
 
         .badge-count {
-            padding: 5px 10px;
+            padding: 4px 8px;
             border-radius: 6px;
-            font-size: 12px;
+            font-size: 11px;
             font-weight: bold;
         }
         .count-done { background: #d1fae5; color: #065f46; }
@@ -244,23 +246,25 @@
             justify-content: center;
             align-items: center;
             z-index: 100;
-            backdrop-filter: blur(3px);
+            padding: 15px;
+            box-sizing: border-box;
+            backdrop-filter: blur(2px);
         }
         .modal-content {
             background: var(--card-bg);
-            padding: 25px;
-            border-radius: 16px;
-            width: 90%;
-            max-width: 400px;
+            padding: 20px;
+            border-radius: 12px;
+            width: 100%;
+            max-width: 380px;
             border: 1px solid var(--border);
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 15px 25px rgba(0,0,0,0.1);
         }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h2>🌊 Водойма Торчин — Чергування</h2>
+    <h2>🌊 Водойма Торчин</h2>
 
     <!-- БЛОК АВТОРИЗАЦІЇ -->
     <div id="login-section">
@@ -273,31 +277,31 @@
             <label for="password">Пароль:</label>
             <input type="password" id="password" placeholder="Введіть пароль">
         </div>
-        <button onclick="handleLogin()">Закинути вудки (Увійти)</button>
+        <button onclick="handleLogin()">Увійти в систему</button>
     </div>
 
-    <!-- ОСНОВНИЙ ДОДАТКОВИЙ ІНТЕРФЕЙС -->
+    <!-- ОСНОВНИЙ ІНТЕРФЕЙС -->
     <div id="app-section" class="hidden">
         <div class="user-header">
             <span id="welcome-user" style="font-weight: bold; color: var(--accent);">Вітаю</span>
-            <button class="btn-danger" style="width: auto; padding: 6px 12px; margin: 0;" onclick="handleLogout()">Вийти</button>
+            <button class="btn-danger" style="width: auto; padding: 5px 10px; margin: 0; font-size: 13px;" onclick="handleLogout()">Вийти</button>
         </div>
 
         <!-- Меню вкладок -->
         <div class="nav-tabs">
             <div class="nav-tab active" onclick="switchTab('calendar', event)">📅 Календар</div>
-            <div class="nav-tab" onclick="switchTab('stats', event)">📊 Хто сторожував</div>
-            <div id="admin-tab-btn" class="nav-tab hidden" onclick="switchTab('admin', event)">⚙️ Адмінка (<span id="pending-count">0</span>)</div>
+            <div class="nav-tab" onclick="switchTab('stats', event)">📊 Хто вартував</div>
+            <div id="admin-tab-btn" class="nav-tab hidden" onclick="switchTab('admin', event)">⚙️ Адмін (<span id="pending-count">0</span>)</div>
         </div>
 
         <!-- ВКЛАДКА 1: КАЛЕНДАР НА МІСЯЦЬ -->
         <div id="tab-calendar" class="tab-content">
             <div class="calendar-header">
-                <button style="width: auto; padding: 6px 12px; margin:0;" onclick="changeMonth(-1)">◀ Попередній</button>
-                <h3 id="calendar-month-title" style="margin: 0;">Жовтень 2026</h3>
-                <button style="width: auto; padding: 6px 12px; margin:0;" onclick="changeMonth(1)">Наступний ▶</button>
+                <button onclick="changeMonth(-1)">◀ Мін.</button>
+                <h3 id="calendar-month-title" style="margin: 0; font-size: 16px;">Жовтень 2026</h3>
+                <button onclick="changeMonth(1)">Наст. ▶</button>
             </div>
-            <div class="calendar-grid" id="calendar-grid-header" style="margin-top: 15px;">
+            <div class="calendar-grid" id="calendar-grid-header" style="margin-top: 10px;">
                 <div class="calendar-day-name">Пн</div>
                 <div class="calendar-day-name">Вт</div>
                 <div class="calendar-day-name">Ср</div>
@@ -307,43 +311,48 @@
                 <div class="calendar-day-name">Нд</div>
             </div>
             <div class="calendar-grid" id="calendar-days-container" style="margin-top: 5px;"></div>
-            <p style="font-size: 13px; color: var(--text-muted); text-align: center; margin-top: 15px;">
-                💡 Натисніть на день у календарі, щоб побачити або забронювати варту (Прізвище та Ім'я).
+            <p style="font-size: 12px; color: var(--text-muted); text-align: center; margin-top: 12px;">
+                💡 Натисніть на день, щоб призначити або забронювати варту.
             </p>
         </div>
 
         <!-- ВКЛАДКА 2: СТАТИСТИКА -->
         <div id="tab-stats" class="tab-content hidden">
             <h3>📇 Облік варти рибалок</h3>
-            <p style="font-size: 13px; color: var(--text-muted); text-align: center;">Скільки разів кожен учасник заступав на охорону водойми:</p>
-            <div id="fishermen-stats-list" style="max-height: 400px; overflow-y: auto; padding-right: 5px; margin-top: 15px;"></div>
+            <p style="font-size: 12px; color: var(--text-muted); text-align: center;">Кількість виходів на охорону водойми:</p>
+            <div id="fishermen-stats-list" style="max-height: 380px; overflow-y: auto; padding-right: 3px; margin-top: 10px;"></div>
         </div>
 
         <!-- ВКЛАДКА 3: АДМІНІСТРУВАННЯ -->
         <div id="tab-admin" class="tab-content hidden">
             <h3>🛡️ Підтвердження бронювань</h3>
-            <div id="admin-requests-list" style="margin-top: 15px;"></div>
+            <div id="admin-requests-list" style="margin-top: 10px;"></div>
         </div>
     </div>
 </div>
 
-<!-- МОДАЛЬНЕ ВІКНО БРОНЮВАННЯ -->
+<!-- МОДАЛЬНЕ ВІКНО -->
 <div id="booking-modal" class="modal hidden">
     <div class="modal-content">
-        <h3 id="modal-date-title">Бронювання дати</h3>
-        <p id="modal-date-info" style="font-size: 14px; color: var(--text-muted); text-align: center; margin: 10px 0 15px 0;"></p>
+        <h3 id="modal-date-title" style="margin-top: 0;">Бронювання дати</h3>
+        <p id="modal-date-info" style="font-size: 13px; color: var(--text-muted); text-align: center; margin: 8px 0 12px 0;"></p>
         
         <div class="form-group" id="booking-select-group">
-            <label for="booking-partner">Напарник по варті (необов'язково):</label>
+            <label for="booking-primary">Перший рибалка:</label>
+            <select id="booking-primary"></select>
+        </div>
+
+        <div class="form-group" id="booking-select-group-2">
+            <label for="booking-partner">Другий рибалка (необов'язково):</label>
             <select id="booking-partner">
-                <option value="">-- Сам (без напарника) --</option>
+                <option value="">-- Без напарника (один) --</option>
             </select>
         </div>
 
         <div id="booking-actions">
-            <button class="btn-green" onclick="submitBooking()">Забронювати дату</button>
+            <button class="btn-green" onclick="submitBooking()">Зберегти / Забронювати</button>
         </div>
-        <button style="background: #64748b; margin-top: 8px;" onclick="closeModal()">Закрити</button>
+        <button style="background: #64748b; margin-top: 6px;" onclick="closeModal()">Закрити</button>
     </div>
 </div>
 
@@ -412,7 +421,7 @@
         document.getElementById("login-section").classList.add("hidden");
         document.getElementById("app-section").classList.remove("hidden");
         
-        document.getElementById("welcome-user").innerText = `🎣 ${currentUser.username} (${currentUser.role === 'admin' ? 'Адміністратор' : 'Учасник'})`;
+        document.getElementById("welcome-user").innerText = `🎣 ${currentUser.username} (${currentUser.role === 'admin' ? 'Адмін' : 'Учасник'})`;
 
         if (currentUser.role === "admin") {
             document.getElementById("admin-tab-btn").classList.remove("hidden");
@@ -505,13 +514,14 @@
             let htmlContent = `<div class="cal-date-num">${day}</div>`;
             
             if (shift) {
-                // Виводимо Прізвище та Ім'я повністю (або через слеш, якщо двоє)
-                let displayGuards = shift.guard2 ? `${shift.guard1}<br>╱ ${shift.guard2}` : `${shift.guard1} (сам)`;
+                let g1Short = shift.guard1.split(' ')[0]; // Прізвище першого
+                let g2Short = shift.guard2 ? shift.guard2.split(' ')[0] : '';
+                let displayGuards = shift.guard2 ? `${g1Short}<br>${g2Short}` : `${g1Short}`;
 
                 if (shift.status === 'confirmed') {
                     htmlContent += `<div class="shift-badge badge-confirmed" title="Сторожують: ${shift.guard1} ${shift.guard2 ? 'та ' + shift.guard2 : ''}">🛡️ ${displayGuards}</div>`;
                 } else {
-                    htmlContent += `<div class="shift-badge badge-pending" title="Очікує підтвердження">⏳ Бронь:<br>${shift.guard1}</div>`;
+                    htmlContent += `<div class="shift-badge badge-pending" title="Очікує підтвердження">⏳ ${g1Short}</div>`;
                 }
             }
 
@@ -533,21 +543,36 @@
         selectedDateStr = dateStr;
         document.getElementById("modal-date-title").innerText = `Дата: ${dateStr}`;
         
+        let primarySelect = document.getElementById("booking-primary");
         let partnerSelect = document.getElementById("booking-partner");
-        partnerSelect.innerHTML = `<option value="">-- Сам (без напарника) --</option>`;
         
+        primarySelect.innerHTML = "";
+        partnerSelect.innerHTML = `<option value="">-- Без напарника (один) --</option>`;
+
         appData.fishermen.forEach(f => {
-            if (currentUser && f !== currentUser.username) {
-                let opt = document.createElement("option");
-                opt.value = f;
-                opt.innerText = f;
-                partnerSelect.appendChild(opt);
-            }
+            let opt1 = document.createElement("option");
+            opt1.value = f;
+            opt1.innerText = f;
+            primarySelect.appendChild(opt1);
+
+            let opt2 = document.createElement("option");
+            opt2.value = f;
+            opt2.innerText = f;
+            partnerSelect.appendChild(opt2);
         });
+
+        if (currentUser && currentUser.role !== 'admin') {
+            primarySelect.value = currentUser.username;
+            primarySelect.disabled = true;
+        } else {
+            primarySelect.disabled = false;
+            if (currentUser) primarySelect.value = currentUser.username;
+        }
 
         let infoText = document.getElementById("modal-date-info");
         let actionsBlock = document.getElementById("booking-actions");
-        let selectGroup = document.getElementById("booking-select-group");
+        let selectGroup1 = document.getElementById("booking-select-group");
+        let selectGroup2 = document.getElementById("booking-select-group-2");
 
         let existingAdminBtns = document.getElementById("modal-admin-actions");
         if (existingAdminBtns) existingAdminBtns.remove();
@@ -556,34 +581,37 @@
             let guardsText = existingShift.guard2 ? `${existingShift.guard1} та ${existingShift.guard2}` : `${existingShift.guard1} (один)`;
             
             if (existingShift.status === 'confirmed') {
-                infoText.innerHTML = `На цю дату варта вже підтверджена:<br><b>${guardsText}</b>`;
-                selectGroup.classList.add("hidden");
+                infoText.innerHTML = `Варта підтверджена:<br><b>${guardsText}</b>`;
+                selectGroup1.classList.add("hidden");
+                selectGroup2.classList.add("hidden");
                 actionsBlock.classList.add("hidden");
                 
                 if (currentUser && currentUser.role === 'admin') {
                     let adminDiv = document.createElement("div");
                     adminDiv.id = "modal-admin-actions";
-                    adminDiv.innerHTML = `<button class="btn-danger" style="margin-top: 10px;" onclick="rejectShift('${dateStr}')">Скасувати цю варту</button>`;
+                    adminDiv.innerHTML = `<button class="btn-danger" style="margin-top: 8px;" onclick="rejectShift('${dateStr}')">Скасувати варту</button>`;
                     actionsBlock.parentNode.insertBefore(adminDiv, actionsBlock);
                 }
             } else {
-                infoText.innerHTML = `Заявка на варту від:<br><b>${guardsText}</b><br><span style="color: #f59e0b; font-weight: bold;">Очікує підтвердження!</span>`;
-                selectGroup.classList.add("hidden");
+                infoText.innerHTML = `Заявка від:<br><b>${guardsText}</b><br><span style="color: #f59e0b; font-weight: bold;">Очікує підтвердження!</span>`;
+                selectGroup1.classList.add("hidden");
+                selectGroup2.classList.add("hidden");
                 actionsBlock.classList.add("hidden");
 
                 if (currentUser && currentUser.role === 'admin') {
                     let adminDiv = document.createElement("div");
                     adminDiv.id = "modal-admin-actions";
                     adminDiv.innerHTML = `
-                        <button class="btn-green" style="margin-top: 10px;" onclick="confirmShift('${dateStr}')">Підтвердити варту</button>
-                        <button class="btn-danger" style="margin-top: 5px;" onclick="rejectShift('${dateStr}')">Відхилити заявку</button>
+                        <button class="btn-green" style="margin-top: 8px;" onclick="confirmShift('${dateStr}')">Підтвердити</button>
+                        <button class="btn-danger" style="margin-top: 4px;" onclick="rejectShift('${dateStr}')">Відхилити</button>
                     `;
                     actionsBlock.parentNode.insertBefore(adminDiv, actionsBlock);
                 }
             }
         } else {
-            infoText.innerHTML = `Дата вільна. Оберіть напарника (або залиште «Сам») і надішліть заявку.`;
-            selectGroup.classList.remove("hidden");
+            infoText.innerHTML = `Оберіть учасників та надішліть заявку або призначте варту.`;
+            selectGroup1.classList.remove("hidden");
+            selectGroup2.classList.remove("hidden");
             actionsBlock.classList.remove("hidden");
         }
 
@@ -595,19 +623,31 @@
     }
 
     function submitBooking() {
+        let primary = document.getElementById("booking-primary").value;
         let partner = document.getElementById("booking-partner").value;
-        let myName = currentUser ? currentUser.username : "Учасник";
+
+        if (!primary) {
+            alert("Оберіть рибалку!");
+            return;
+        }
+
+        if (partner && primary === partner) {
+            alert("Перший рибалка і напарник не можуть бути однією людиною!");
+            return;
+        }
+
+        let statusVal = (currentUser && currentUser.role === 'admin') ? 'confirmed' : 'pending';
 
         appData.shifts.push({
             date: selectedDateStr,
-            guard1: myName,
+            guard1: primary,
             guard2: partner || "",
-            status: "pending"
+            status: statusVal
         });
 
         saveToCloud();
         closeModal();
-        alert("Бронювання успішно надіслано на підтвердження адміністратору!");
+        alert(currentUser && currentUser.role === 'admin' ? "Варту успішно призначено!" : "Бронювання надіслано на підтвердження!");
     }
 
     function renderStats() {
@@ -631,9 +671,9 @@
             
             let badgeHtml = total > 0 
                 ? `<span class="badge-count count-done">🛡️ Вартостей: ${total}</span>` 
-                : `<span class="badge-count count-none">⚠️ Ще не сторожував</span>`;
+                : `<span class="badge-count count-none">⚠️ Ще ні</span>`;
 
-            card.innerHTML = `<span><b>${f}</b></span>${badgeHtml}`;
+            card.innerHTML = `<span style="font-size: 13px;"><b>${f}</b></span>${badgeHtml}`;
             container.appendChild(card);
         });
     }
@@ -645,7 +685,7 @@
         let pendingShifts = appData.shifts.filter(s => s.status === 'pending');
 
         if (pendingShifts.length === 0) {
-            container.innerHTML = `<p style="text-align: center; color: var(--text-muted); margin-top: 20px;">Немає нових заяв на бронювання.</p>`;
+            container.innerHTML = `<p style="text-align: center; color: var(--text-muted); margin-top: 15px; font-size: 13px;">Немає нових заяв на бронювання.</p>`;
             return;
         }
 
@@ -654,16 +694,16 @@
             card.className = "stats-card";
             card.style.flexDirection = "column";
             card.style.alignItems = "flex-start";
-            card.style.gap = "8px";
+            card.style.gap = "6px";
 
             let guardsText = shift.guard2 ? `${shift.guard1} та ${shift.guard2}` : `${shift.guard1} (один)`;
 
             card.innerHTML = `
-                <div>📅 Дата: <b>${shift.date}</b></div>
-                <div>🎣 Хто заступає: <b>${guardsText}</b></div>
-                <div style="display: flex; gap: 10px; width: 100%; margin-top: 5px;">
-                    <button class="btn-green" style="margin:0; padding: 8px;" onclick="confirmShift('${shift.date}')">Підтвердити</button>
-                    <button class="btn-danger" style="margin:0; padding: 8px;" onclick="rejectShift('${shift.date}')">Відхилити</button>
+                <div style="font-size: 13px;">📅 Дата: <b>${shift.date}</b></div>
+                <div style="font-size: 13px;">🎣 Хто заступає: <b>${guardsText}</b></div>
+                <div style="display: flex; gap: 8px; width: 100%; margin-top: 4px;">
+                    <button class="btn-green" style="margin:0; padding: 8px; font-size: 13px;" onclick="confirmShift('${shift.date}')">Підтвердити</button>
+                    <button class="btn-danger" style="margin:0; padding: 8px; font-size: 13px;" onclick="rejectShift('${shift.date}')">Відхилити</button>
                 </div>
             `;
             container.appendChild(card);
