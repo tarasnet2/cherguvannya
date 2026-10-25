@@ -3,490 +3,286 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Календар Чергування Рибалок — Водойма</title>
+    <title>Чергування Водойми Торчин</title>
     <style>
-        :root {
-            --primary: #1b4332;
-            --accent: #2d6a4f;
-            --light-green: #e8f5e9;
-            --bg-light: #f4f6f8;
-            --card-bg: #ffffff;
-            --border: #d8dad3;
-            --danger: #e63946;
-            --success: #2a9d8f;
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f7f6;
+            margin: 0;
+            padding: 20px;
+            color: #333;
         }
-        * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-        body { background-color: var(--bg-light); margin: 0; padding: 12px; color: #333; }
-        .container { max-width: 950px; margin: 0 auto; background: var(--card-bg); padding: 16px; border-radius: 16px; box-shadow: 0 4px 16px rgba(0,0,0,0.08); border: 1px solid var(--border); }
-        h1, h2, h3 { color: var(--primary); text-align: center; }
-        .hidden { display: none !important; }
-        
-        .auth-container { max-width: 380px; margin: 60px auto; background: #fff; padding: 24px; border-radius: 16px; box-shadow: 0 4px 16px rgba(0,0,0,0.1); border: 1px solid var(--border); }
-        .form-group { margin-bottom: 14px; }
-        label { display: block; margin-bottom: 5px; font-weight: 600; color: var(--primary); font-size: 14px; }
-        input, select { width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 10px; font-size: 15px; background: #fafafa; }
-        
-        button { background: var(--accent); color: white; border: none; padding: 12px; border-radius: 10px; cursor: pointer; font-size: 15px; font-weight: bold; width: 100%; transition: background 0.2s; }
-        button:hover { background: var(--primary); }
-        .btn-secondary { background: #6c757d; }
-        .btn-danger { background: var(--danger); }
-        .btn-sm { padding: 6px 10px; font-size: 13px; width: auto; }
-        .btn-book { background: #3a86ff; padding: 6px 12px; font-size: 13px; border-radius: 6px; color: #fff; border: none; cursor: pointer; }
-        .btn-book:hover { background: #2667cc; }
-
-        .header-bar { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #eaeaea; padding-bottom: 12px; margin-bottom: 16px; }
-        .user-badge { background: var(--light-green); color: var(--primary); padding: 6px 12px; border-radius: 20px; font-size: 13px; font-weight: 600; }
-        
-        .nav-tabs { display: flex; gap: 6px; margin-bottom: 16px; overflow-x: auto; padding-bottom: 4px; }
-        .nav-tab { flex: 1; min-width: 90px; text-align: center; padding: 10px 8px; background: #e9ecef; border-radius: 10px; font-weight: 600; font-size: 13px; cursor: pointer; color: #495057; border: none; white-space: nowrap; }
-        .nav-tab.active { background: var(--accent); color: white; }
-
-        .calendar-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 14px; margin-top: 15px; }
-        .calendar-card { background: #fff; border: 1px solid var(--border); border-radius: 12px; padding: 14px; box-shadow: 0 2px 6px rgba(0,0,0,0.02); display: flex; flex-direction: column; justify-content: space-between; }
-        .calendar-card.done { border-left: 6px solid var(--success); background: #f4faf6; }
-        .calendar-card.missed { border-left: 6px solid var(--danger); background: #fdf7f7; }
-        .calendar-card.pending { border-left: 6px solid #ffb703; }
-        
-        .cal-date { font-weight: bold; font-size: 16px; color: var(--primary); margin-bottom: 8px; border-bottom: 1px solid #eee; padding-bottom: 6px; display: flex; justify-content: space-between; align-items: center; }
-        .cal-slot { font-size: 13px; margin: 6px 0; display: flex; justify-content: space-between; align-items: center; background: #fafafa; padding: 6px 8px; border-radius: 6px; gap: 6px; }
-        
-        .card { background: #fff; border-radius: 12px; padding: 16px; margin-bottom: 14px; border: 1px solid var(--border); }
-        .list-group { list-style: none; padding: 0; margin: 0; max-height: 450px; overflow-y: auto; }
-        .list-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; border-bottom: 1px solid #eee; font-size: 15px; }
-
-        .status-msg { font-size: 13px; text-align: center; margin-top: 10px; font-weight: 500; }
-        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-        @media(max-width: 600px) { .grid-2 { grid-template-columns: 1fr; } }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+        h2 { text-align: center; color: #2c3e50; }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        input, select, button {
+            width: 100%;
+            padding: 10px;
+            box-sizing: border-box;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+        button {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+        button:hover { background-color: #2980b9; }
+        .hidden { display: none; }
+        .alert {
+            padding: 10px;
+            background-color: #e74c3c;
+            color: white;
+            border-radius: 4px;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th { background-color: #f2f2f2; }
+        .user-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #ecf0f1;
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <div id="login-section" class="auth-container">
-        <h2>🎣 Водойма Торчин</h2>
-        <p style="text-align: center; font-size: 13px; color: #666; margin-bottom: 20px;">Вхід у систему чергувань</p>
+    <h2>🌊 Чергування Водойми Торчин</h2>
+
+    <!-- Блок авторизації -->
+    <div id="login-section">
+        <div id="login-error" class="alert hidden">Невірний логін або пароль</div>
         <div class="form-group">
-            <label>Логін (Ваше Прізвище або admin):</label>
-            <input type="text" id="username" placeholder="Введіть логін">
+            <label for="username">Логін:</label>
+            <input type="text" id="username" placeholder="Введіть ваш логін">
         </div>
         <div class="form-group">
-            <label>Пароль:</label>
+            <label for="password">Пароль:</label>
             <input type="password" id="password" placeholder="Введіть пароль">
         </div>
-        <button onclick="login()">Увійти</button>
-        <div id="login-error" class="status-msg" style="color: var(--danger);"></div>
+        <button onclick="handleLogin()">Увійти</button>
     </div>
 
+    <!-- Основний додаток (спочатку прихований) -->
     <div id="app-section" class="hidden">
-        <div class="header-bar">
-            <div class="user-badge">
-                👤 <span id="user-greeting"></span> (<span id="user-role-badge"></span>)
-            </div>
-            <button class="btn-danger btn-sm" onclick="logout()">Вийти</button>
+        <div class="user-info">
+            <span id="welcome-user">Користувач</span>
+            <button style="width: auto; padding: 5px 10px; background: #e74c3c;" onclick="handleLogout()">Вийти</button>
         </div>
 
-        <div class="nav-tabs">
-            <button class="nav-tab active" onclick="switchTab('tab-schedule', this)">📅 Календар чергувань</button>
-            <button class="nav-tab" onclick="switchTab('tab-fishermen', this)">👥 Рибалки (<span id="fishCount">0</span>)</button>
-            <button class="nav-tab admin-only" onclick="switchTab('tab-generator', this)">⚙️ Генератор (Адмін)</button>
-            <button class="nav-tab" onclick="switchTab('tab-sync', this)">🔄 Синхронізація</button>
+        <h3>Актуальний графік чергувань</h3>
+        <button onclick="refreshData()">Оновити дані</button>
+        
+        <div id="schedule-container">
+            <table id="schedule-table">
+                <thead>
+                    <tr>
+                        <th>Дата</th>
+                        <th>Черговий 1</th>
+                        <th>Черговий 2</th>
+                    </tr>
+                </thead>
+                <tbody id="schedule-body">
+                    <!-- Дані заповнюються автоматично -->
+                </tbody>
+            </table>
         </div>
 
-        <div id="tab-schedule" class="tab-content">
-            <h3>📅 Календар чергувань</h3>
-            <div class="card">
-                <p style="font-size: 13px; color: #555; margin-top:0;">Оберіть вільну дату та натисніть «Забронювати». Адмін може призначати або змінювати будь-кого.</p>
-                <div class="grid-2">
-                    <div>
-                        <label>Дата початку місяця:</label>
-                        <input type="date" id="scheduleStartDate" onchange="updateStartDate(this.value)">
-                    </div>
-                    <div>
-                        <label>Фільтр по рибалці:</label>
-                        <select id="filterFisherman" onchange="renderSchedule()">
-                            <option value="">Всі рибалки</option>
-                        </select>
-                    </div>
-                </div>
+        <!-- Панель адміністратора -->
+        <div id="admin-panel" class="hidden" style="margin-top: 20px; border-top: 2px dashed #ccc; padding-top: 15px;">
+            <h4 style="color: #e67e22;">Панель адміністратора</h4>
+            <div class="form-group">
+                <label for="new-date">Дата зміни:</label>
+                <input type="date" id="new-date">
             </div>
-            <div id="calendarContainer" class="calendar-grid"></div>
-        </div>
-
-        <div id="tab-fishermen" class="tab-content hidden">
-            <h3>👥 Список рибалок спільноти</h3>
-            <div class="card admin-only">
-                <label>Додати нового рибалку:</label>
-                <div style="display: flex; gap: 8px;">
-                    <input type="text" id="newFishermanName" placeholder="Прізвище Ім'я">
-                    <button style="width: auto;" onclick="addFisherman()">+ Додати</button>
-                </div>
+            <div class="form-group">
+                <label for="guard-1">Черговий 1:</label>
+                <input type="text" id="guard-1" placeholder="Прізвище 1">
             </div>
-            <div class="card">
-                <ul id="fishermenList" class="list-group"></ul>
+            <div class="form-group">
+                <label for="guard-2">Черговий 2:</label>
+                <input type="text" id="guard-2" placeholder="Прізвище 2">
             </div>
-        </div>
-
-        <div id="tab-generator" class="tab-content hidden admin-only">
-            <h3>⚙️ Генератор порожнього календаря</h3>
-            <div class="card">
-                <p style="font-size: 14px; color: #555;">Створює сітку повністю порожніх днів для самостійного бронювання учасниками.</p>
-                <div class="form-group">
-                    <label>Кількість днів:</label>
-                    <input type="number" id="genDays" value="30" min="1" max="90">
-                </div>
-                <button onclick="generateEmptySchedule()">Створити порожній календар</button>
-            </div>
-        </div>
-
-        <div id="tab-sync" class="tab-content hidden">
-            <h3>🔄 Хмарна синхронізація</h3>
-            <div class="card">
-                <p style="font-size: 14px; color: #555;">Зберігайте заброньовані дати та статуси у вашу Google Таблицю[cite: 4].</p>
-                <button onclick="saveToCloud()" style="margin-bottom: 10px;">☁️ Зберегти в Google Таблицю</button>
-                <button class="btn-secondary" onclick="loadFromCloud()">📥 Завантажити з Таблиці</button>
-                <div id="syncStatus" class="status-msg"></div>
-            </div>
+            <button style="background-color: #27ae60;" onclick="addShift()">Додати / Оновити зміну</button>
         </div>
     </div>
 </div>
 
 <script>
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyPWlih9WYtsA4r0c4x0epH3aAoOrz4v-apmONKtjEEq_rNmc8jKYBGw3b4aBKp5U9R6A/exec";
+    // Посилання на ваш розгорнутий Google Apps Script
+    const API_URL = "https://script.google.com/macros/s/AKfycbxMsstUmnOmFGL98PbhPeucsspzhTOqxo4vZVvxBAwO2-KbJEzWQuxQG5Vkk54Te53IJg/exec";
 
-    let db = {
-        startDate: new Date().toISOString().split('T')[0],
-        fishermen: [
-            "Петренко Тарас", "Іваненко Олександр", "Сидоренко Василь", "Ковальчук Михайло", 
-            "Бондаренко Сергій", "Ткаченко Андрій", "Мельник Олег", "Шевченко Юрій", 
-            "Бойко Дмитро", "Коваль Віктор", "Лисенко Володимир", "Олійник Роман", 
-            "Василенко Іван", "Поліщук Петро", "Кравчук Микола", "Грицюк Степан", 
-            "Павлюк Анатолій", "Савчук Павло", "Романюк Максим", "Марчук Олексій", 
-            "Ковальчук Назар", "Демчук Богдан", "Ящук Артем", "Власюк Віталій", 
-            "Гнатюк Руслан", "Коваль Юрій", "Панасюк Олег", "Левчук Сергій", 
-            "Матвійчук Андрій", "Стельмах Максим", "Тимощук Дмитро", "Остапчук Василь", 
-            "Нечипорук Іван", "Дчук Микола", "Смоляр Олександр", "Кухарук Петро", 
-            "Зінчук Роман", "Пилипчук Павло", "Шеремета Віктор", "Ярощук Богдан"
-        ],
+    let appData = {
+        startDate: "",
+        fishermen: [],
         shifts: []
     };
+
     let currentUser = null;
 
-    function login() {
-        const user = document.getElementById('username').value.trim();
-        const pass = document.getElementById('password').value.trim();
-        const errorDiv = document.getElementById('login-error');
-        
-        if (!user || !pass) {
-            errorDiv.innerText = "Введіть логін та пароль!";
+    // Функція авторизації
+    function handleLogin() {
+        const userField = document.getElementById("username").value.trim();
+        const passField = document.getElementById("password").value.trim();
+        const errorBox = document.getElementById("login-error");
+
+        if (!userField || !passField) {
+            errorBox.innerText = "Введіть логін і пароль";
+            errorBox.classList.remove("hidden");
             return;
         }
 
-        if (pass === "123456" && user.toLowerCase() !== "admin") {
-            currentUser = { username: user, role: "user" };
-            localStorage.setItem('cherg_user', JSON.stringify(currentUser));
-            initApp();
-            return;
-        }
+        const loginUrl = `${API_URL}?action=login&username=${encodeURIComponent(userField)}&password=${encodeURIComponent(passField)}`;
 
-        errorDiv.innerText = "Перевірка через сервер...";
+        fetch(loginUrl)
+            .then(response => response.json())
+            .then(result => {
+                if (result.status === "success") {
+                    currentUser = result;
+                    errorBox.classList.add("hidden");
+                    document.getElementById("login-section").classList.add("hidden");
+                    document.getElementById("app-section").classList.remove("hidden");
+                    
+                    document.getElementById("welcome-user").innerText = `Вітаю, ${result.username} (${result.role})`;
 
-        const callbackName = 'cb_' + Math.random().toString(36).substring(2);
-        const script = document.createElement('script');
-        script.src = `${SCRIPT_URL}?action=login&username=${encodeURIComponent(user)}&password=${encodeURIComponent(pass)}&callback=${callbackName}`;
+                    if (result.role === "admin") {
+                        document.getElementById("admin-panel").classList.remove("hidden");
+                    }
 
-        window[callbackName] = function(response) {
-            delete window[callbackName];
-            if (script.parentNode) document.body.removeChild(script);
-
-            if (response.status === 'success') {
-                currentUser = { username: response.username, role: response.role };
-                localStorage.setItem('cherg_user', JSON.stringify(currentUser));
-                initApp();
-            } else {
-                errorDiv.innerText = response.message || "Невірний логін або пароль!";
-            }
-        };
-
-        script.onerror = function() {
-            if (pass === "123456") {
-                currentUser = { username: user, role: "user" };
-                localStorage.setItem('cherg_user', JSON.stringify(currentUser));
-                initApp();
-                return;
-            }
-            delete window[callbackName];
-            if (script.parentNode) document.body.removeChild(script);
-            errorDiv.innerText = "Помилка зв'язку з сервером.";
-        };
-
-        document.body.appendChild(script);
-    }
-
-    function logout() {
-        localStorage.removeItem('cherg_user');
-        currentUser = null;
-        document.getElementById('app-section').classList.add('hidden');
-        document.getElementById('login-section').classList.remove('hidden');
-        document.getElementById('username').value = '';
-        document.getElementById('password').value = '';
-    }
-
-    function initApp() {
-        document.getElementById('login-section').classList.add('hidden');
-        document.getElementById('app-section').classList.remove('hidden');
-        document.getElementById('user-greeting').innerText = currentUser.username;
-        document.getElementById('user-role-badge').innerText = currentUser.role === 'admin' ? 'Адміністратор' : 'Рибалка';
-
-        const adminElems = document.querySelectorAll('.admin-only');
-        adminElems.forEach(el => {
-            if (currentUser.role !== 'admin') el.classList.add('hidden');
-            else el.classList.remove('hidden');
-        });
-
-        loadLocalData();
-        renderFishermen();
-        updateFishermenDropdown();
-        if (db.shifts.length === 0) generateEmptySchedule();
-        renderSchedule();
-    }
-
-    function switchTab(tabId, btn) {
-        document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
-        document.querySelectorAll('.nav-tab').forEach(el => el.classList.remove('active'));
-        document.getElementById(tabId).classList.remove('hidden');
-        btn.classList.add('active');
-    }
-
-    function loadLocalData() {
-        const saved = localStorage.getItem('cherg_db');
-        if (saved) {
-            try { db = JSON.parse(saved); } catch(e){}
-        }
-        document.getElementById('scheduleStartDate').value = db.startDate || new Date().toISOString().split('T')[0];
-    }
-
-    function saveLocalData() {
-        localStorage.setItem('cherg_db', JSON.stringify(db));
-    }
-
-    function updateStartDate(val) {
-        db.startDate = val;
-        saveLocalData();
-        renderSchedule();
-    }
-
-    function renderFishermen() {
-        const list = document.getElementById('fishermenList');
-        list.innerHTML = '';
-        document.getElementById('fishCount').innerText = db.fishermen.length;
-        
-        db.fishermen.forEach((name, idx) => {
-            const li = document.createElement('li');
-            li.className = 'list-item';
-            li.innerHTML = `
-                <span><strong>${idx + 1}.</strong> ${name}</span>
-                ${currentUser && currentUser.role === 'admin' ? `<button class="btn-danger btn-sm" onclick="removeFisherman(${idx})">Видалити</button>` : ''}
-            `;
-            list.appendChild(li);
-        });
-        updateFishermenDropdown();
-    }
-
-    function updateFishermenDropdown() {
-        const select = document.getElementById('filterFisherman');
-        const currentVal = select.value;
-        select.innerHTML = '<option value="">Всі рибалки</option>';
-        db.fishermen.forEach(name => {
-            const opt = document.createElement('option');
-            opt.value = name;
-            opt.innerText = name;
-            if (name === currentVal) opt.selected = true;
-            select.appendChild(opt);
-        });
-    }
-
-    function addFisherman() {
-        const input = document.getElementById('newFishermanName');
-        const name = input.value.trim();
-        if (name) {
-            db.fishermen.push(name);
-            input.value = '';
-            saveLocalData();
-            renderFishermen();
-        }
-    }
-
-    function removeFisherman(idx) {
-        if (confirm(`Видалити рибалку ${db.fishermen[idx]}?`)) {
-            db.fishermen.splice(idx, 1);
-            saveLocalData();
-            renderFishermen();
-        }
-    }
-
-    function generateEmptySchedule() {
-        const days = parseInt(document.getElementById('genDays').value) || 30;
-        db.shifts = [];
-        for (let i = 0; i < days; i++) {
-            db.shifts.push({ dayIndex: i, p1: "", p2: "", status: "pending" });
-        }
-        saveLocalData();
-        renderSchedule();
-        alert("Створено повністю порожній календар!");
-        switchTab('tab-schedule', document.querySelectorAll('.nav-tab')[0]);
-    }
-
-    function bookShift(idx, slotNum, selectedName = null) {
-        const shift = db.shifts[idx];
-        const userName = selectedName || currentUser.username;
-
-        if (slotNum === 1) {
-            shift.p1 = (shift.p1 === userName && !selectedName) ? "" : userName;
-        } else if (slotNum === 2) {
-            shift.p2 = (shift.p2 === userName && !selectedName) ? "" : userName;
-        }
-
-        saveLocalData();
-        renderSchedule();
-    }
-
-    function renderSchedule() {
-        const container = document.getElementById('calendarContainer');
-        container.innerHTML = '';
-        const filter = document.getElementById('filterFisherman').value;
-
-        if (!db.shifts || db.shifts.length === 0) {
-            container.innerHTML = '<p>Календар порожній.</p>';
-            return;
-        }
-
-        const start = new Date(db.startDate || Date.now());
-
-        db.shifts.forEach((shift, idx) => {
-            if (filter && shift.p1 !== filter && shift.p2 !== filter) return;
-
-            const currentDate = new Date(start);
-            currentDate.setDate(start.getDate() + idx);
-            const dateStr = currentDate.toLocaleDateString('uk-UA', { day: '2-digit', month: '2-digit', year: 'numeric', weekday: 'short' });
-
-            const card = document.createElement('div');
-            card.className = `calendar-card ${shift.status}`;
-
-            let statusText = '⏳ Очікується';
-            if (shift.status === 'done') statusText = '✓ Відчергували';
-            if (shift.status === 'missed') statusText = '✕ Пропустили';
-
-            let slot1Html = '';
-            let slot2Html = '';
-
-            if (currentUser.role === 'admin') {
-                let options1 = '<option value="">-- Вільно --</option>';
-                let options2 = '<option value="">-- Вільно --</option>';
-                db.fishermen.forEach(f => {
-                    options1 += `<option value="${f}" ${shift.p1 === f ? 'selected' : ''}>${f}</option>`;
-                    options2 += `<option value="${f}" ${shift.p2 === f ? 'selected' : ''}>${f}</option>`;
-                });
-
-                slot1Html = `<span>1.</span> <select onchange="bookShift(${idx}, 1, this.value)" style="padding:4px; font-size:12px; flex:1;">${options1}</select>`;
-                slot2Html = `<span>2.</span> <select onchange="bookShift(${idx}, 2, this.value)" style="padding:4px; font-size:12px; flex:1;">${options2}</select>`;
-            } else {
-                let p1Text = shift.p1 ? `<b>${shift.p1}</b>` : '<span style="color:#aaa">Вільно</span>';
-                let p2Text = shift.p2 ? `<b>${shift.p2}</b>` : '<span style="color:#aaa">Вільно</span>';
-                let btn1Text = (shift.p1 === currentUser.username) ? 'Скасувати' : 'Забронювати';
-                let btn2Text = (shift.p2 === currentUser.username) ? 'Скасувати' : 'Забронювати';
-
-                slot1Html = `<span>1. ${p1Text}</span> <button class="btn-book" style="background:${shift.p1===currentUser.username?'#e63946':'#3a86ff'}; padding:4px 8px; font-size:12px;" onclick="bookShift(${idx}, 1)">${btn1Text}</button>`;
-                slot2Html = `<span>2. ${p2Text}</span> <button class="btn-book" style="background:${shift.p2===currentUser.username?'#e63946':'#52b788'}; padding:4px 8px; font-size:12px;" onclick="bookShift(${idx}, 2)">${btn2Text}</button>`;
-            }
-
-            let adminStatusHtml = '';
-            if (currentUser.role === 'admin') {
-                adminStatusHtml = `
-                    <div style="margin-top: 8px; border-top: 1px dashed #ddd; padding-top: 6px;">
-                        <label style="font-size:11px; margin-bottom:2px;">Звіт про чергування:</label>
-                        <select onchange="updateShiftStatus(${idx}, this.value)" style="padding:4px; font-size:12px; width:100%;">
-                            <option value="pending" ${shift.status==='pending'?'selected':''}>⏳ Очікується</option>
-                            <option value="done" ${shift.status==='done'?'selected':''}>✓ Відчергували</option>
-                            <option value="missed" ${shift.status==='missed'?'selected':''}>✕ Пропустили</option>
-                        </select>
-                    </div>
-                `;
-            }
-
-            card.innerHTML = `
-                <div>
-                    <div class="cal-date">
-                        <span>📅 ${dateStr}</span>
-                        <span style="font-size: 11px; font-weight: bold; color: ${shift.status==='done'?'#2a9d8f':(shift.status==='missed'?'#e63946':'#b5838d')}">${statusText}</span>
-                    </div>
-                    <div class="cal-slot">${slot1Html}</div>
-                    <div class="cal-slot">${slot2Html}</div>
-                </div>
-                ${adminStatusHtml}
-            `;
-            container.appendChild(card);
-        });
-    }
-
-    function updateShiftStatus(idx, val) {
-        db.shifts[idx].status = val;
-        saveLocalData();
-        renderSchedule();
-    }
-
-    function saveToCloud() {
-        const status = document.getElementById('syncStatus');
-        status.innerText = "Збереження в Google Таблицю...";
-        
-        const callbackName = 'cb_save_' + Math.random().toString(36).substring(2);
-        const script = document.createElement('script');
-        const dataParam = encodeURIComponent(JSON.stringify(db));
-        script.src = `${SCRIPT_URL}?action=save&db=${dataParam}&callback=${callbackName}`;
-        
-        window[callbackName] = function(response) {
-            delete window[callbackName];
-            if (script.parentNode) document.body.removeChild(script);
-            if (response && response.status === 'success') {
-                status.innerText = "✅ Дані успішно збережено в Google Таблицю!";
-            } else {
-                status.innerText = "❌ Помилка збереження даних.";
-            }
-        };
-
-        script.onerror = function() {
-            delete window[callbackName];
-            if (script.parentNode) document.body.removeChild(script);
-            status.innerText = "❌ Помилка зв'язку з сервером.";
-        };
-
-        document.body.appendChild(script);
-    }
-
-    function loadFromCloud() {
-        const status = document.getElementById('syncStatus');
-        status.innerText = "Завантаження...";
-        fetch(SCRIPT_URL)
-            .then(res => res.json())
-            .then(data => {
-                if (data && data.fishermen) {
-                    db = data;
-                    saveLocalData();
-                    renderFishermen();
-                    renderSchedule();
-                    status.innerText = "✅ Дані завантажено!";
+                    loadAppData();
                 } else {
-                    status.innerText = "У таблиці порожньо.";
+                    errorBox.innerText = result.message || "Невірний логін або пароль";
+                    errorBox.classList.remove("hidden");
                 }
             })
-            .catch(() => status.innerText = "Помилка зв'язку.");
+            .catch(error => {
+                console.error("Помилка входу:", error);
+                errorBox.innerText = "Помилка зв'язку з сервером";
+                errorBox.classList.remove("hidden");
+            });
     }
 
-    window.onload = function() {
-        const savedUser = localStorage.getItem('cherg_user');
-        if (savedUser) {
-            try { currentUser = JSON.parse(savedUser); initApp(); } catch(e) { logout(); }
+    // Вихід з системи
+    function handleLogout() {
+        currentUser = null;
+        document.getElementById("app-section").classList.add("hidden");
+        document.getElementById("login-section").classList.remove("hidden");
+        document.getElementById("username").value = "";
+        document.getElementById("password").value = "";
+    }
+
+    // Завантаження даних з хмари
+    function loadAppData() {
+        fetch(API_URL)
+            .then(response => response.json())
+            .then(data => {
+                appData = data;
+                renderSchedule();
+            })
+            .catch(error => {
+                console.error("Помилка завантаження даних:", error);
+            });
+    }
+
+    function refreshData() {
+        loadAppData();
+        alert("Дані оновлено!");
+    }
+
+    // Рендер таблиці на екрані
+    function renderSchedule() {
+        const tbody = document.getElementById("schedule-body");
+        tbody.innerHTML = "";
+
+        if (!appData.shifts || appData.shifts.length === 0) {
+            tbody.innerHTML = "<tr><td colspan='3' style='text-align:center;'>Графік поки порожній</td></tr>";
+            return;
         }
-    };
+
+        appData.shifts.forEach(shift => {
+            let tr = document.createElement("tr");
+            tr.innerHTML = `<td>${shift.date}</td><td>${shift.guard1}</td><td>${shift.guard2}</td>`;
+            tbody.appendChild(tr);
+        });
+    }
+
+    // Додавання нової зміни (для адміна)
+    function addShift() {
+        const date = document.getElementById("new-date").value;
+        const g1 = document.getElementById("guard-1").value.trim();
+        const g2 = document.getElementById("guard-2").value.trim();
+
+        if (!date || !g1 || !g2) {
+            alert("Заповніть усі поля для зміни!");
+            return;
+        }
+
+        if (!appData.shifts) {
+            appData.shifts = [];
+        }
+
+        appData.shifts.push({ date: date, guard1: g1, guard2: g2 });
+
+        // Зберігаємо в хмару
+        saveAppData();
+    }
+
+    // Збереження даних у Google Таблицю через бекенд
+    function saveAppData() {
+        fetch(API_URL + "?action=save", {
+            method: "POST",
+            headers: {
+                "Content-Type": "text/plain;charset=utf-8"
+            },
+            body: JSON.stringify({ db: JSON.stringify(appData) })
+        })
+        .then(response => response.json())
+        .then(result => {
+            if (result.status === "success") {
+                alert("Зміни успішно збережено та синхронізовано!");
+                renderSchedule();
+                // Очистка полів адмін-панелі
+                document.getElementById("new-date").value = "";
+                document.getElementById("guard-1").value = "";
+                document.getElementById("guard-2").value = "";
+            } else {
+                alert("Помилка збереження: " + result.message);
+            }
+        })
+        .catch(error => {
+            console.error("Помилка збереження:", error);
+            alert("Не вдалося зберегти дані у хмару.");
+        });
+    }
 </script>
 
 </body>
