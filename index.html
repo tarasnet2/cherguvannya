@@ -41,7 +41,6 @@
         .nav-tab { flex: 1; min-width: 90px; text-align: center; padding: 10px 8px; background: #e9ecef; border-radius: 10px; font-weight: 600; font-size: 13px; cursor: pointer; color: #495057; border: none; white-space: nowrap; }
         .nav-tab.active { background: var(--accent); color: white; }
 
-        /* Стилі календаря */
         .calendar-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 14px; margin-top: 15px; }
         .calendar-card { background: #fff; border: 1px solid var(--border); border-radius: 12px; padding: 14px; box-shadow: 0 2px 6px rgba(0,0,0,0.02); display: flex; flex-direction: column; justify-content: space-between; }
         .calendar-card.done { border-left: 6px solid var(--success); background: #f4faf6; }
@@ -63,7 +62,6 @@
 <body>
 
 <div class="container">
-    <!-- АВТОРИЗАЦІЯ -->
     <div id="login-section" class="auth-container">
         <h2>🎣 Водойма Торчин</h2>
         <p style="text-align: center; font-size: 13px; color: #666; margin-bottom: 20px;">Вхід у систему чергувань</p>
@@ -79,7 +77,6 @@
         <div id="login-error" class="status-msg" style="color: var(--danger);"></div>
     </div>
 
-    <!-- ДОДАТОК -->
     <div id="app-section" class="hidden">
         <div class="header-bar">
             <div class="user-badge">
@@ -95,11 +92,10 @@
             <button class="nav-tab" onclick="switchTab('tab-sync', this)">🔄 Синхронізація</button>
         </div>
 
-        <!-- ВКЛАДКА 1: КАЛЕНДАР ТА БРОНЮВАННЯ -->
         <div id="tab-schedule" class="tab-content">
             <h3>📅 Календар чергувань</h3>
             <div class="card">
-                <p style="font-size: 13px; color: #555; margin-top:0;">Оберіть вільну дату та натисніть «Забронювати». Адмін може змінювати будь-якого рибалку.</p>
+                <p style="font-size: 13px; color: #555; margin-top:0;">Оберіть вільну дату та натисніть «Забронювати». Адмін може призначати або змінювати будь-кого.</p>
                 <div class="grid-2">
                     <div>
                         <label>Дата початку місяця:</label>
@@ -116,7 +112,6 @@
             <div id="calendarContainer" class="calendar-grid"></div>
         </div>
 
-        <!-- ВКЛАДКА 2: РИБАЛКИ -->
         <div id="tab-fishermen" class="tab-content hidden">
             <h3>👥 Список рибалок спільноти</h3>
             <div class="card admin-only">
@@ -131,7 +126,6 @@
             </div>
         </div>
 
-        <!-- ВКЛАДКА 3: ГЕНЕРАТОР (Адмін) -->
         <div id="tab-generator" class="tab-content hidden admin-only">
             <h3>⚙️ Генератор порожнього календаря</h3>
             <div class="card">
@@ -144,7 +138,6 @@
             </div>
         </div>
 
-        <!-- ВКЛАДКА 4: СИНХРОНІЗАЦІЯ -->
         <div id="tab-sync" class="tab-content hidden">
             <h3>🔄 Хмарна синхронізація</h3>
             <div class="card">
@@ -343,7 +336,6 @@
         switchTab('tab-schedule', document.querySelectorAll('.nav-tab')[0]);
     }
 
-    // Бронювання або зміна учасника (Адмін може ставити будь-кого, рибалка — себе)
     function bookShift(idx, slotNum, selectedName = null) {
         const shift = db.shifts[idx];
         const userName = selectedName || currentUser.username;
@@ -384,12 +376,10 @@
             if (shift.status === 'done') statusText = '✓ Відчергували';
             if (shift.status === 'missed') statusText = '✕ Пропустили';
 
-            // Формування виглядів для першого та другого місця чергування
             let slot1Html = '';
             let slot2Html = '';
 
             if (currentUser.role === 'admin') {
-                // Адмін може вибрати будь-кого зі списку або очистити слот
                 let options1 = '<option value="">-- Вільно --</option>';
                 let options2 = '<option value="">-- Вільно --</option>';
                 db.fishermen.forEach(f => {
@@ -400,7 +390,6 @@
                 slot1Html = `<span>1.</span> <select onchange="bookShift(${idx}, 1, this.value)" style="padding:4px; font-size:12px; flex:1;">${options1}</select>`;
                 slot2Html = `<span>2.</span> <select onchange="bookShift(${idx}, 2, this.value)" style="padding:4px; font-size:12px; flex:1;">${options2}</select>`;
             } else {
-                // Для звичайного рибалки
                 let p1Text = shift.p1 ? `<b>${shift.p1}</b>` : '<span style="color:#aaa">Вільно</span>';
                 let p2Text = shift.p2 ? `<b>${shift.p2}</b>` : '<span style="color:#aaa">Вільно</span>';
                 let btn1Text = (shift.p1 === currentUser.username) ? 'Скасувати' : 'Забронювати';
@@ -410,7 +399,6 @@
                 slot2Html = `<span>2. ${p2Text}</span> <button class="btn-book" style="background:${shift.p2===currentUser.username?'#e63946':'#52b788'}; padding:4px 8px; font-size:12px;" onclick="bookShift(${idx}, 2)">${btn2Text}</button>`;
             }
 
-            // Статуси (адмін бачить і може змінювати, хто відчергував, а хто пропустив)
             let adminStatusHtml = '';
             if (currentUser.role === 'admin') {
                 adminStatusHtml = `
@@ -449,10 +437,28 @@
     function saveToCloud() {
         const status = document.getElementById('syncStatus');
         status.innerText = "Збереження в Google Таблицю...";
+        
+        const callbackName = 'cb_save_' + Math.random().toString(36).substring(2);
         const script = document.createElement('script');
-        script.src = `${SCRIPT_URL}?action=save&db=${encodeURIComponent(JSON.stringify(db))}`;
-        script.onload = () => { status.innerText = "✅ Успішно збережено!"; if(script.parentNode)document.body.removeChild(script); };
-        script.onerror = () => { status.innerText = "❌ Помилка збереження."; if(script.parentNode)document.body.removeChild(script); };
+        const dataParam = encodeURIComponent(JSON.stringify(db));
+        script.src = `${SCRIPT_URL}?action=save&db=${dataParam}&callback=${callbackName}`;
+        
+        window[callbackName] = function(response) {
+            delete window[callbackName];
+            if (script.parentNode) document.body.removeChild(script);
+            if (response && response.status === 'success') {
+                status.innerText = "✅ Дані успішно збережено в Google Таблицю!";
+            } else {
+                status.innerText = "❌ Помилка збереження даних.";
+            }
+        };
+
+        script.onerror = function() {
+            delete window[callbackName];
+            if (script.parentNode) document.body.removeChild(script);
+            status.innerText = "❌ Помилка зв'язку з сервером.";
+        };
+
         document.body.appendChild(script);
     }
 
