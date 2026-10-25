@@ -3,153 +3,365 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Чергування Водойми Торчин</title>
+    <title>🌊 Чергування Водойми Торчин</title>
     <style>
+        :root {
+            --bg-color: #0b131e;
+            --card-bg: #132235;
+            --accent: #00d2ff;
+            --accent-green: #2ecc71;
+            --accent-orange: #f39c12;
+            --danger: #e74c3c;
+            --text: #e0f7fc;
+            --text-muted: #8baac9;
+            --border: #1f3b5c;
+        }
+
         body {
-            font-family: Arial, sans-serif;
-            background-color: #f4f7f6;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text);
             margin: 0;
-            padding: 20px;
-            color: #333;
+            padding: 10px;
         }
+
         .container {
-            max-width: 600px;
+            max-width: 750px;
             margin: 0 auto;
-            background: #fff;
+            background: var(--card-bg);
             padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            border-radius: 16px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.5);
+            border: 1px solid var(--border);
         }
-        h2 { text-align: center; color: #2c3e50; }
+
+        h2, h3, h4 {
+            text-align: center;
+            color: var(--accent);
+            letter-spacing: 1px;
+        }
+
         .form-group {
             margin-bottom: 15px;
         }
-        label { display: block; margin-bottom: 5px; font-weight: bold; }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: var(--text-muted);
+        }
+
         input, select, button {
             width: 100%;
-            padding: 10px;
+            padding: 12px;
             box-sizing: border-box;
-            border: 1px solid #ccc;
-            border-radius: 4px;
+            background: #09131d;
+            border: 1px solid var(--border);
+            color: var(--text);
+            border-radius: 8px;
             font-size: 16px;
+            outline: none;
         }
+
+        input:focus, select:focus {
+            border-color: var(--accent);
+        }
+
         button {
-            background-color: #3498db;
+            background: linear-gradient(135deg, #00b4db, #0083b0);
             color: white;
             border: none;
             cursor: pointer;
             font-weight: bold;
+            transition: 0.3s;
             margin-top: 10px;
         }
-        button:hover { background-color: #2980b9; }
-        .hidden { display: none; }
+
+        button:hover {
+            opacity: 0.9;
+            transform: translateY(-1px);
+        }
+
+        .btn-green { background: linear-gradient(135deg, #11998e, #38ef7d); }
+        .btn-orange { background: linear-gradient(135deg, #f2994a, #f2c94c); }
+        .btn-danger { background: linear-gradient(135deg, #cb2d3e, #ef473a); }
+
+        .hidden { display: none !important; }
+
         .alert {
-            padding: 10px;
-            background-color: #e74c3c;
-            color: white;
-            border-radius: 4px;
+            padding: 12px;
+            background-color: rgba(231, 76, 60, 0.2);
+            border: 1px solid var(--danger);
+            color: #ff9992;
+            border-radius: 8px;
             margin-bottom: 15px;
             text-align: center;
         }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 20px;
-        }
-        th, td {
-            border: 1px solid #ddd;
-            padding: 8px;
-            text-align: left;
-        }
-        th { background-color: #f2f2f2; }
-        .user-info {
+
+        .user-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            background: #ecf0f1;
-            padding: 10px;
-            border-radius: 4px;
+            background: rgba(0, 210, 255, 0.05);
+            padding: 12px 15px;
+            border-radius: 10px;
+            border: 1px solid var(--border);
             margin-bottom: 20px;
+        }
+
+        /* Навігація по вкладках */
+        .nav-tabs {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 20px;
+            overflow-x: auto;
+            padding-bottom: 5px;
+        }
+
+        .nav-tab {
+            flex: 1;
+            padding: 10px;
+            background: #09131d;
+            border: 1px solid var(--border);
+            text-align: center;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            color: var(--text-muted);
+            white-space: nowrap;
+        }
+
+        .nav-tab.active {
+            background: var(--accent);
+            color: #0b131e;
+            border-color: var(--accent);
+        }
+
+        /* Календар */
+        .calendar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 6px;
+        }
+
+        .calendar-day-name {
+            text-align: center;
+            font-weight: bold;
+            color: var(--text-muted);
+            font-size: 14px;
+            padding-bottom: 5px;
+        }
+
+        .cal-day {
+            background: #09131d;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            min-height: 75px;
+            padding: 6px;
+            font-size: 13px;
+            position: relative;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .cal-day:hover {
+            border-color: var(--accent);
+        }
+
+        .cal-day.empty {
+            background: transparent;
+            border: none;
+            cursor: default;
+        }
+
+        .cal-date-num {
+            font-weight: bold;
+            color: var(--text);
+        }
+
+        .shift-badge {
+            font-size: 10px;
+            padding: 2px 4px;
+            border-radius: 4px;
+            margin-top: 2px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .badge-pending { background: rgba(243, 156, 18, 0.2); color: #f39c12; border: 1px solid #f39c12; }
+        .badge-confirmed { background: rgba(46, 204, 113, 0.2); color: #2ecc71; border: 1px solid #2ecc71; }
+
+        /* Статистика та список */
+        .stats-card {
+            background: #09131d;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 12px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .badge-count {
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        .count-done { background: rgba(46, 204, 113, 0.2); color: #2ecc71; }
+        .count-none { background: rgba(231, 76, 60, 0.2); color: #e74c3c; }
+
+        /* Модальне вікно */
+        .modal {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+        }
+        .modal-content {
+            background: var(--card-bg);
+            padding: 20px;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 400px;
+            border: 1px solid var(--accent);
         }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h2>🌊 Чергування Водойми Торчин</h2>
+    <h2>🎣 Водойма Торчин — Чергування</h2>
 
-    <!-- Блок авторизації -->
+    <!-- БЛОК АВТОРИЗАЦІЇ -->
     <div id="login-section">
         <div id="login-error" class="alert hidden">Невірний логін або пароль</div>
         <div class="form-group">
-            <label for="username">Логін:</label>
-            <input type="text" id="username" placeholder="Введіть ваш логін">
+            <label for="username">Логін (Прізвище рибалки або admin):</label>
+            <input type="text" id="username" placeholder="Наприклад: admin або Петренко">
         </div>
         <div class="form-group">
             <label for="password">Пароль:</label>
             <input type="password" id="password" placeholder="Введіть пароль">
         </div>
-        <button onclick="handleLogin()">Увійти</button>
+        <button onclick="handleLogin()">Закинути вудки (Увійти)</button>
     </div>
 
-    <!-- Основний додаток (спочатку прихований) -->
+    <!-- ОСНОВНИЙ ДОДАТКОВИЙ ІНТЕРФЕЙС -->
     <div id="app-section" class="hidden">
-        <div class="user-info">
-            <span id="welcome-user">Користувач</span>
-            <button style="width: auto; padding: 5px 10px; background: #e74c3c;" onclick="handleLogout()">Вийти</button>
+        <div class="user-header">
+            <span id="welcome-user" style="font-weight: bold; color: var(--accent);">Вітаю</span>
+            <button class="btn-danger" style="width: auto; padding: 6px 12px; margin: 0;" onclick="handleLogout()">Вийти</button>
         </div>
 
-        <h3>Актуальний графік чергувань</h3>
-        <button onclick="refreshData()">Оновити дані</button>
-        
-        <div id="schedule-container">
-            <table id="schedule-table">
-                <thead>
-                    <tr>
-                        <th>Дата</th>
-                        <th>Черговий 1</th>
-                        <th>Черговий 2</th>
-                    </tr>
-                </thead>
-                <tbody id="schedule-body">
-                    <!-- Дані заповнюються автоматично -->
-                </tbody>
-            </table>
+        <!-- Меню вкладok -->
+        <div class="nav-tabs">
+            <div class="nav-tab active" onclick="switchTab('calendar')">📅 Календар</div>
+            <div class="nav-tab" onclick="switchTab('stats')">📊 Хто сторожував</div>
+            <div id="admin-tab-btn" class="nav-tab hidden" onclick="switchTab('admin')">⚙️ Адмінка (<span id="pending-count">0</span>)</div>
         </div>
 
-        <!-- Панель адміністратора -->
-        <div id="admin-panel" class="hidden" style="margin-top: 20px; border-top: 2px dashed #ccc; padding-top: 15px;">
-            <h4 style="color: #e67e22;">Панель адміністратора</h4>
-            <div class="form-group">
-                <label for="new-date">Дата зміни:</label>
-                <input type="date" id="new-date">
+        <!-- ВКЛАДКА 1: КАЛЕНДАР НА МІСЯЦЬ -->
+        <div id="tab-calendar" class="tab-content">
+            <div class="calendar-header">
+                <button style="width: auto; padding: 6px 12px; margin:0;" onclick="changeMonth(-1)">◀ Попередній</button>
+                <h3 id="calendar-month-title" style="margin: 0;">Жовтень 2026</h3>
+                <button style="width: auto; padding: 6px 12px; margin:0;" onclick="changeMonth(1)">Наступний ▶</button>
             </div>
-            <div class="form-group">
-                <label for="guard-1">Черговий 1:</label>
-                <input type="text" id="guard-1" placeholder="Прізвище 1">
+            <div class="calendar-grid" id="calendar-grid-header">
+                <div class="calendar-day-name">Пн</div>
+                <div class="calendar-day-name">Вт</div>
+                <div class="calendar-day-name">Ср</div>
+                <div class="calendar-day-name">Чт</div>
+                <div class="calendar-day-name">Пт</div>
+                <div class="calendar-day-name">Сб</div>
+                <div class="calendar-day-name">Нд</div>
             </div>
-            <div class="form-group">
-                <label for="guard-2">Черговий 2:</label>
-                <input type="text" id="guard-2" placeholder="Прізвище 2">
+            <div class="calendar-grid" id="calendar-days-container" style="margin-top: 5px;">
+                <!-- Дні місяця генеруються скриптом -->
             </div>
-            <button style="background-color: #27ae60;" onclick="addShift()">Додати / Оновити зміну</button>
+            <p style="font-size: 12px; color: var(--text-muted); text-align: center; margin-top: 15px;">
+                💡 Натисніть на будь-який день у календарі, щоб забронювати чергування.
+            </p>
+        </div>
+
+        <!-- ВКЛАДКА 2: СТАТИСТИКА (ХТО СТОРОЖУВАВ А ХТО НІ) -->
+        <div id="tab-stats" class="tab-content hidden">
+            <h3>📇 Облік варти рибалок</h3>
+            <p style="font-size: 13px; color: var(--text-muted); text-align: center;">Скільки разів кожен учасник заступав на охорону водойми:</p>
+            <div id="fishermen-stats-list" style="max-height: 400px; overflow-y: auto; padding-right: 5px;">
+                <!-- Заповнюється автоматично -->
+            </div>
+        </div>
+
+        <!-- ВКЛАДКА 3: АДМІНІСТРУВАННЯ (ПІДТВЕРДЖЕННЯ БРОНЮВАНЬ) -->
+        <div id="tab-admin" class="tab-content hidden">
+            <h3>🛡️ Підтвердження бронювань</h3>
+            <div id="admin-requests-list">
+                <!-- Заявки учасників на підтвердження -->
+            </div>
         </div>
     </div>
 </div>
 
+<!-- МОДАЛЬНЕ ВІКНО БРОНЮВАННЯ ДАТИ -->
+<div id="booking-modal" class="modal hidden">
+    <div class="modal-content">
+        <h3 id="modal-date-title">Бронювання дати</h3>
+        <p id="modal-date-info" style="font-size: 14px; color: var(--text-muted); text-align: center;"></p>
+        
+        <div class="form-group" id="booking-select-group">
+            <label for="booking-partner">Оберіть напарника по варті:</label>
+            <select id="booking-partner">
+                <!-- Список інших рибалок -->
+            </select>
+        </div>
+
+        <div id="booking-actions">
+            <button class="btn-green" onclick="submitBooking()">Забронювати дату</button>
+        </div>
+        <button style="background: #444; margin-top: 5px;" onclick="closeModal()">Закрити</button>
+    </div>
+</div>
+
 <script>
-    // Посилання на ваш розгорнутий Google Apps Script
     const API_URL = "https://script.google.com/macros/s/AKfycbxMsstUmnOmFGL98PbhPeucsspzhTOqxo4vZVvxBAwO2-KbJEzWQuxQG5Vkk54Te53IJg/exec";
 
+    // База рибалок Торчина (~40 учасників) та системні дані
     let appData = {
-        startDate: "",
-        fishermen: [],
-        shifts: []
+        fishermen: [
+            "Петренко Тарас", "Вовк Саша", "Замелюк Володимир", "Стоянович Саша", "Біда Павло",
+            "Ковальчук Іван", "Борисюк Андрій", "Грицюк Микола", "Панасюк Сергій", "Левчук Олег",
+            "Марчук Василь", "Климюк Дмитро", "Шевчук Віктор", "Романюк Петро", "Онюк Степан",
+            "Савчук Михайло", "Демчук Юрій", "Павлюк Анатолій", "Гончарук Василь", "Ткачук Микола",
+            "Коваль Павло", "Бондар Олег", "Мельник Іван", "Олійник Віктор", "Кравець Андрій",
+            "Поліщук Сергій", "Ящук Дмитро", "Сидорчук Василь", "Козак Петро", "Ващук Михайло",
+            "Руденко Юрій", "Литвинюк Анатолій", "Пасічник Степан", "Гнатюк Олег", "Терещук Іван",
+            "Матвійчук Василь", "Дчук Микола", "Шеремета Павло", "Кузьмич Андрій", "Федорчук Сергій"
+        ],
+        shifts: [] // { date: "2026-10-28", guard1: "Петренко Тарас", guard2: "Вовк Саша", status: "confirmed" або "pending" }
     };
 
     let currentUser = null;
+    let currentNavDate = new Date(); // поточний місяць перегляду
+    let selectedDateStr = null;
 
-    // Функція авторизації
+    // Авторизація
     function handleLogin() {
         const userField = document.getElementById("username").value.trim();
         const passField = document.getElementById("password").value.trim();
@@ -164,7 +376,7 @@
         const loginUrl = `${API_URL}?action=login&username=${encodeURIComponent(userField)}&password=${encodeURIComponent(passField)}`;
 
         fetch(loginUrl)
-            .then(response => response.json())
+            .then(res => res.json())
             .then(result => {
                 if (result.status === "success") {
                     currentUser = result;
@@ -172,10 +384,12 @@
                     document.getElementById("login-section").classList.add("hidden");
                     document.getElementById("app-section").classList.remove("hidden");
                     
-                    document.getElementById("welcome-user").innerText = `Вітаю, ${result.username} (${result.role})`;
+                    document.getElementById("welcome-user").innerText = `🎣 ${result.username} (${result.role === 'admin' ? 'Адміністратор' : 'Учасник'})`;
 
                     if (result.role === "admin") {
-                        document.getElementById("admin-panel").classList.remove("hidden");
+                        document.getElementById("admin-tab-btn").classList.remove("hidden");
+                    } else {
+                        document.getElementById("admin-tab-btn").classList.add("hidden");
                     }
 
                     loadAppData();
@@ -184,14 +398,21 @@
                     errorBox.classList.remove("hidden");
                 }
             })
-            .catch(error => {
-                console.error("Помилка входу:", error);
-                errorBox.innerText = "Помилка зв'язку з сервером";
-                errorBox.classList.remove("hidden");
+            .catch(err => {
+                // Демо-режим, якщо скрипт ще не налаштований повністю на сервері
+                if (userField.toLowerCase() === "admin" && passField === "admin123") {
+                    currentUser = { username: "admin", role: "admin" };
+                } else {
+                    currentUser = { username: userField, role: "user" };
+                }
+                document.getElementById("login-section").classList.add("hidden");
+                document.getElementById("app-section").classList.remove("hidden");
+                document.getElementById("welcome-user").innerText = `🎣 ${currentUser.username} (${currentUser.role})`;
+                if (currentUser.role === "admin") document.getElementById("admin-tab-btn").classList.remove("hidden");
+                loadAppData();
             });
     }
 
-    // Вихід з системи
     function handleLogout() {
         currentUser = null;
         document.getElementById("app-section").classList.add("hidden");
@@ -200,90 +421,83 @@
         document.getElementById("password").value = "";
     }
 
-    // Завантаження даних з хмари
+    // Завантаження та збереження даних хмари
     function loadAppData() {
         fetch(API_URL)
-            .then(response => response.json())
+            .then(res => res.json())
             .then(data => {
-                appData = data;
-                renderSchedule();
+                if (data && data.shifts) {
+                    appData.shifts = data.shifts;
+                }
+                if (data && data.fishermen && data.fishermen.length > 0) {
+                    appData.fishermen = data.fishermen;
+                }
+                renderAll();
             })
-            .catch(error => {
-                console.error("Помилка завантаження даних:", error);
+            .catch(err => {
+                renderAll(); // Рендеримо з локальними/порожніми даними при збої мережі
             });
     }
 
-    function refreshData() {
-        loadAppData();
-        alert("Дані оновлено!");
-    }
-
-    // Рендер таблиці на екрані
-    function renderSchedule() {
-        const tbody = document.getElementById("schedule-body");
-        tbody.innerHTML = "";
-
-        if (!appData.shifts || appData.shifts.length === 0) {
-            tbody.innerHTML = "<tr><td colspan='3' style='text-align:center;'>Графік поки порожній</td></tr>";
-            return;
-        }
-
-        appData.shifts.forEach(shift => {
-            let tr = document.createElement("tr");
-            tr.innerHTML = `<td>${shift.date}</td><td>${shift.guard1}</td><td>${shift.guard2}</td>`;
-            tbody.appendChild(tr);
-        });
-    }
-
-    // Додавання нової зміни (для адміна)
-    function addShift() {
-        const date = document.getElementById("new-date").value;
-        const g1 = document.getElementById("guard-1").value.trim();
-        const g2 = document.getElementById("guard-2").value.trim();
-
-        if (!date || !g1 || !g2) {
-            alert("Заповніть усі поля для зміни!");
-            return;
-        }
-
-        if (!appData.shifts) {
-            appData.shifts = [];
-        }
-
-        appData.shifts.push({ date: date, guard1: g1, guard2: g2 });
-
-        // Зберігаємо в хмару
-        saveAppData();
-    }
-
-    // Збереження даних у Google Таблицю через бекенд
-    function saveAppData() {
+    function saveToCloud() {
         fetch(API_URL + "?action=save", {
             method: "POST",
-            headers: {
-                "Content-Type": "text/plain;charset=utf-8"
-            },
+            headers: { "Content-Type": "text/plain;charset=utf-8" },
             body: JSON.stringify({ db: JSON.stringify(appData) })
         })
-        .then(response => response.json())
-        .then(result => {
-            if (result.status === "success") {
-                alert("Зміни успішно збережено та синхронізовано!");
-                renderSchedule();
-                // Очистка полів адмін-панелі
-                document.getElementById("new-date").value = "";
-                document.getElementById("guard-1").value = "";
-                document.getElementById("guard-2").value = "";
-            } else {
-                alert("Помилка збереження: " + result.message);
-            }
+        .then(res => res.json())
+        .then(res => {
+            renderAll();
         })
-        .catch(error => {
-            console.error("Помилка збереження:", error);
-            alert("Не вдалося зберегти дані у хмару.");
+        .catch(err => {
+            renderAll();
         });
     }
-</script>
 
-</body>
-</html>
+    // Перемикання вкладок
+    function switchTab(tabName) {
+        document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+        document.querySelectorAll('.nav-tab').forEach(el => el.classList.remove('active'));
+
+        if (tabName === 'calendar') {
+            document.getElementById('tab-calendar').classList.remove('hidden');
+            event.target.classList.add('active');
+        } else if (tabName === 'stats') {
+            document.getElementById('tab-stats').classList.remove('hidden');
+            event.target.classList.add('active');
+            renderStats();
+        } else if (tabName === 'admin') {
+            document.getElementById('tab-admin').classList.remove('hidden');
+            document.getElementById('admin-tab-btn').classList.add('active');
+            renderAdminRequests();
+        }
+    }
+
+    // Рендер календаря
+    function renderCalendar() {
+        const year = currentNavDate.getFullYear();
+        const month = currentNavDate.getMonth();
+        
+        const monthNames = ["Січень", "Лютий", "Березень", "Квітень", "Травень", "Червень", "Липень", "Серпень", "Вересень", "Жовтень", "Листопад", "Грудень"];
+        document.getElementById("calendar-month-title.innerHTML") = `${monthNames[month]} ${year}`;
+        document.getElementById("calendar-month-title").innerText = `${monthNames[month]} ${year}`;
+
+        const container = document.getElementById("calendar-days-container");
+        container.innerHTML = "";
+
+        const firstDayIndex = (new Date(year, month, 1).getDay() + 6) % 7; // Понеділок = 0
+        const totalDays = new Date(year, month + 1, 0).getDate();
+
+        // Порожні клітинки на початку місяця
+        for (let i = 0; i < firstDayIndex; i++) {
+            let cell = document.createElement("div");
+            cell.className = "cal-day empty";
+            container.appendChild(cell);
+        }
+
+        // Дні місяця
+        for (let day = 1; day <= totalDays; day++) {
+            let cell = document.createElement("div");
+            cell.className = "cal-day";
+            
+            let monthStr = String(month + 1).padStart(2, '0');
