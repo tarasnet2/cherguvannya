@@ -271,8 +271,8 @@
     <div id="login-section">
         <div id="login-error" class="alert hidden">Невірний логін або пароль</div>
         <div class="form-group">
-            <label for="username">Логін (Прізвище та Ім'я або admin):</label>
-            <input type="text" id="username" placeholder="Наприклад: admin або Улітовський Тарас">
+            <label for="username">Логін (Ваше Прізвище та Ім'я або admin):</label>
+            <input type="text" id="username" placeholder="Наприклад: Улітовський Тарас">
         </div>
         <div class="form-group">
             <label for="password">Пароль:</label>
@@ -377,50 +377,20 @@
 <script>
     const API_URL = "https://script.google.com/macros/s/AKfycbxMsstUmnOmFGL98PbhPeucsspzhTOqxo4vZVvxBAwO2-KbJEzWQuxQG5Vkk54Te53IJg/exec";
 
+    // Ваш повний актуальний список рибалок водойми Торчин
     let appData = {
         fishermen: [
-            "Вовк Саша",
-            "Замелюк Володимир",
-            "Стоянович Саша (стар)",
-            "Біда Павло",
-            "Андрій Хілюк",
-            "Зінчук Міша",
-            "Карпук Валерій",
-            "Лопухович Сергій",
-            "Кондисюк Саша",
-            "Дідич Сергій",
-            "Бойко Руслан Іванович",
-            "Дорощук Богдан",
-            "Микола Вавринчук",
-            "Рогацько Віталій",
-            "Богдан Келер",
-            "Сачковський Саша",
-            "Стоянович Іван",
-            "Саша Трохимович",
-            "Тлучкевич Олег",
-            "Назарко Ігор",
-            "Вовк Віктор",
-            "Михайлюк Омелян",
-            "Міщук Анатолій",
-            "Санчик Петро",
-            "Пилипчук Віктор",
-            "Кузьмінчук Олександр",
-            "Ліпич Богдан",
-            "Бомазюк Григорій Полікарпович",
-            "Олексюк Олександр",
-            "Бохонський Микола",
-            "Порва Віктор",
-            "Тлучкевич Валентин",
-            "Гвоздик Володимир",
-            "Улітовський Тарас",
-            "Неволін Ігор",
-            "Ахметов Михайло",
-            "Хавань Борис",
-            "Грищук Віктор",
-            "Назарук Віталій",
-            "Купцов Леонід",
-            "Піцик Сергій",
-            "Харитонов Володимир"
+            "Вовк Саша", "Замелюк Володимир", "Стоянович Саша (стар)", "Біда Павло",
+            "Андрій Хілюк", "Зінчук Міша", "Карпук Валерій", "Лопухович Сергій",
+            "Кондисюк Саша", "Дідич Сергій", "Бойко Руслан Іванович", "Дорощук Богдан",
+            "Микола Вавринчук", "Рогацько Віталій", "Богдан Келер", "Сачковський Саша",
+            "Стоянович Іван", "Саша Трохимович", "Тлучкевич Олег", "Назарко Ігор",
+            "Вовк Віктор", "Михайлюк Омелян", "Міщук Анатолій", "Санчик Петро",
+            "Пилипчук Віктор", "Кузьмінчук Олександр", "Ліпич Богдан", "Бомазюк Григорій Полікарпович",
+            "Олексюк Олександр", "Бохонський Микола", "Порва Віктор", "Тлучкевич Валентин",
+            "Гвоздик Володимир", "Улітовський Тарас", "Неволін Ігор", "Ахметов Михайло",
+            "Хавань Борис", "Грищук Віктор", "Назарук Віталій", "Купцов Леонід",
+            "Піцик Сергій", "Харитонов Володимир"
         ],
         shifts: []
     };
@@ -434,8 +404,8 @@
         const passField = document.getElementById("password").value.trim();
         const errorBox = document.getElementById("login-error");
 
-        if (!userField || !passField) {
-            errorBox.innerText = "Введіть логін і пароль";
+        if (!userField) {
+            errorBox.innerText = "Введіть ваше Прізвище та Ім'я";
             errorBox.classList.remove("hidden");
             return;
         }
@@ -445,26 +415,15 @@
             return;
         }
 
-        const loginUrl = `${API_URL}?action=login&username=${encodeURIComponent(userField)}&password=${encodeURIComponent(passField)}`;
+        // Шукаємо рибалку в списку (частковий або повний збіг)
+        let foundFisherman = appData.fishermen.find(f => f.toLowerCase() === userField.toLowerCase() || f.toLowerCase().includes(userField.toLowerCase()));
 
-        fetch(loginUrl)
-            .then(res => res.json())
-            .then(result => {
-                if (result.status === "success") {
-                    grantAccess(result);
-                } else {
-                    let foundFisherman = appData.fishermen.find(f => f.toLowerCase() === userField.toLowerCase() || f.toLowerCase().includes(userField.toLowerCase()));
-                    if (foundFisherman) {
-                        grantAccess({ username: foundFisherman, role: "user" });
-                    } else {
-                        errorBox.innerText = result.message || "Невірний логін або пароль";
-                        errorBox.classList.remove("hidden");
-                    }
-                }
-            })
-            .catch(err => {
-                grantAccess({ username: userField, role: userField.toLowerCase() === "admin" ? "admin" : "user" });
-            });
+        if (foundFisherman) {
+            grantAccess({ username: foundFisherman, role: "user" });
+        } else {
+            // Якщо не знайшло точного, але поле не порожнє — все одно пускаємо користувача
+            grantAccess({ username: userField, role: "user" });
+        }
     }
 
     function grantAccess(userData) {
@@ -499,7 +458,11 @@
             .then(res => res.json())
             .then(data => {
                 if (data && data.shifts) appData.shifts = data.shifts;
-                if (data && data.fishermen && data.fishermen.length > 0) appData.fishermen = data.fishermen;
+                if (data && data.fishermen && data.fishermen.length > 0) {
+                    data.fishermen.forEach(f => {
+                        if (!appData.fishermen.includes(f)) appData.fishermen.push(f);
+                    });
+                }
                 renderAll();
             })
             .catch(err => {
@@ -623,6 +586,7 @@
             primarySelect.disabled = false;
             if (appData.fishermen.length > 0) primarySelect.value = appData.fishermen[0];
         } else {
+            // Звичайний користувач автоматично стає першим рибалкою
             primarySelect.value = currentUser ? currentUser.username : (appData.fishermen[0] || "");
             primarySelect.disabled = true;
         }
