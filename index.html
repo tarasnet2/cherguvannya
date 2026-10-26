@@ -232,6 +232,28 @@ button:active {
   border: 1px solid var(--border);
   box-shadow: 0 15px 25px rgba(0,0,0,0.1);
 }
+.notification-banner {
+  background: #fef3c7;
+  border: 1px solid #f59e0b;
+  color: #92400e;
+  padding: 10px;
+  border-radius: 8px;
+  margin-bottom: 12px;
+  font-size: 13px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.edit-name-group {
+  display: flex;
+  gap: 6px;
+  width: 100%;
+}
+.edit-name-input {
+  padding: 4px 8px;
+  font-size: 13px;
+  margin: 0;
+}
 </style>
 </head>
 <body>
@@ -253,10 +275,16 @@ button:active {
 
   <!-- ОСНОВНИЙ ІНТЕРФЕЙС -->
   <div id="app-section" class="hidden">
+    <div id="notif-banner" class="notification-banner hidden">
+      <span>Увімкніть сповіщення, щоб отримувати нагадування за 3 дні та за 1 день до варти!</span>
+      <button onclick="requestNotificationPermission()" style="width: auto; margin: 0; padding: 4px 8px; font-size: 12px;">Увімкнути</button>
+    </div>
+
     <div class="user-header">
       <span id="welcome-user" style="font-weight: bold; color: var(--accent);">Вітаю</span>
       <button class="btn-danger" style="width: auto; padding: 5px 10px; margin: 0; font-size: 13px;" onclick="handleLogout()">Вийти</button>
     </div>
+
     <!-- Меню вкладок -->
     <div class="nav-tabs">
       <div class="nav-tab active" onclick="switchTab('calendar', event)">Календар</div>
@@ -306,12 +334,12 @@ button:active {
     <!-- ВКЛАДКА 4: КЕРУВАННЯ СПИСКОМ РИБАЛОК -->
     <div id="tab-settings" class="tab-content hidden">
       <h3>Редагування списку рибалок</h3>
-      <p style="font-size: 12px; color: var(--text-muted); text-align: center;">Додайте нових або видаліть зайвих рибалок</p>
+      <p style="font-size: 12px; color: var(--text-muted); text-align: center;">Додайте нових, змініть ПІБ або видаліть рибалок</p>
       <div class="form-group" style="display: flex; gap: 8px; margin-top: 10px;">
         <input type="text" id="new-fisherman-input" placeholder="Прізвище Ім'я нового рибалки" style="margin: 0;">
         <button class="btn-green" style="width: auto; margin: 0; padding: 10px 15px;" onclick="addFisherman()">Додати</button>
       </div>
-      <div id="fishermen-manage-list" style="max-height: 320px; overflow-y: auto; margin-top: 15px;"></div>
+      <div id="fishermen-manage-list" style="max-height: 340px; overflow-y: auto; margin-top: 15px;"></div>
     </div>
   </div>
 </div>
@@ -341,7 +369,6 @@ button:active {
 <script>
 const API_URL = "https://script.google.com/macros/s/AKfycbxMsstUmnOmFGL98PbhPeucsspzhT0qxo4vZVvxBAw02-KbJEzWQuxQ";
 
-// Алфавітно впорядкований список рибалок водойми Торчин
 let appData = {
   fishermen: [
     "Андрій Хілюк",
@@ -393,6 +420,72 @@ let appData = {
 let currentUser = null;
 let currentNavDate = new Date();
 let selectedDateStr = null;
+let editingFishermanIndex = -1;
+
+function checkNotificationPermission() {
+  if (!("Notification" in window)) return;
+  const banner = document.getElementById("notif-banner");
+  if (Notification.permission === "default") {
+    banner.classList.remove("hidden");
+  } else {
+    banner.classList.add("hidden");
+  }
+}
+
+function requestNotificationPermission() {
+  if (!("Notification" in window)) {
+    alert("Ваш браузер не підтримує сповіщення.");
+    return;
+  }
+  Notification.requestPermission().then(permission => {
+    if (permission === "granted") {
+      document.getElementById("notif-banner").classList.add("hidden");
+      alert("Сповіщення увімкнено! Ви отримуватимете нагадування про варту.");
+      checkUserShiftReminders();
+    }
+  });
+}
+
+function checkUserShiftReminders() {
+  if (!currentUser || currentUser.role === "admin" || Notification.permission !== "granted") return;
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const sentNotifs = JSON.parse(localStorage.getItem("sentShiftNotifs") || "{}");
+
+  appData.shifts.forEach(shift => {
+    if (shift.status !== 'confirmed') return;
+    if (shift.guard1 !== currentUser.username && shift.guard2 !== currentUser.username) return;
+
+    const shiftDate = new Date(shift.date);
+    shiftDate.setHours(0, 0, 0, 0);
+
+    const diffDays = Math.round((shiftDate - today) / (1000 * 60 * 60 * 24));
+
+    if (diffDays === 3) {
+      const key = `${shift.date}_3days_${currentUser.username}`;
+      if (!sentNotifs[key]) {
+        new Notification("Нагадування про варту (Водойма Торчин)", {
+          body: `Увага! Через 3 дні (${shift.date}) у вас чергування!`,
+          icon: "https://cdn-icons-png.flaticon.com/512/2913/2913520.png"
+        });
+        sentNotifs[key] = true;
+      }
+    } else if (diffDays === 1) {
+      const key = `${shift.date}_1day_${currentUser.username}`;
+      if (!sentNotifs[key]) {
+        new Notification("Термінове нагадування (Водойма Торчин)", {
+          body: `Завтра (${shift.date}) ваше чергування! Будь ласка, не забудьте.`,
+          icon: "https://cdn-icons-png.flaticon.com/512/2913/2913520.png"
+        });
+        sentNotifs[key] = true;
+      }
+    }
+  });
+
+  localStorage.setItem("sentShiftNotifs", JSON.stringify(sentNotifs));
+}
 
 function handleLogin() {
   const userField = document.getElementById("username").value.trim();
@@ -434,6 +527,7 @@ function grantAccess(userData) {
   } else {
     document.getElementById("admin-tab-btn").classList.add("hidden");
     document.getElementById("settings-tab-btn").classList.add("hidden");
+    checkNotificationPermission();
   }
   loadAppData();
 }
@@ -458,6 +552,7 @@ function loadAppData() {
         appData.fishermen.sort((a, b) => a.localeCompare(b, 'uk'));
       }
       renderAll();
+      checkUserShiftReminders();
     })
     .catch(err => {
       renderAll();
@@ -560,7 +655,6 @@ function openBookingModal(dateStr, existingShift) {
   primarySelect.innerHTML = "";
   partnerSelect.innerHTML = `<option value="">-- Без напарника (один) --</option>`;
 
-  // Гарантовано сортований список у селектах
   appData.fishermen.sort((a, b) => a.localeCompare(b, 'uk')).forEach(f => {
     let opt1 = document.createElement("option");
     opt1.value = f;
@@ -666,12 +760,66 @@ function renderFishermenList() {
   appData.fishermen.sort((a, b) => a.localeCompare(b, 'uk')).forEach((f, index) => {
     let card = document.createElement("div");
     card.className = "stats-card";
-    card.innerHTML = `
-      <span style="font-size: 13px;"><b>${f}</b></span>
-      <button class="btn-danger" style="width: auto; margin: 0; padding: 4px 8px; font-size: 12px;" onclick="removeFisherman(${index})">Видалити</button>
-    `;
+
+    if (editingFishermanIndex === index) {
+      card.innerHTML = `
+        <div class="edit-name-group">
+          <input type="text" id="edit-fisherman-input" class="edit-name-input" value="${f}">
+          <button class="btn-green" style="width: auto; margin: 0; padding: 4px 8px; font-size: 12px;" onclick="saveEditedFisherman(${index})">Зберегти</button>
+          <button style="width: auto; margin: 0; padding: 4px 8px; font-size: 12px; background: #64748b;" onclick="cancelEditFisherman()">Скасувати</button>
+        </div>
+      `;
+    } else {
+      card.innerHTML = `
+        <span style="font-size: 13px;"><b>${f}</b></span>
+        <div style="display: flex; gap: 4px;">
+          <button class="btn-orange" style="width: auto; margin: 0; padding: 4px 8px; font-size: 12px;" onclick="startEditFisherman(${index})">Редагувати</button>
+          <button class="btn-danger" style="width: auto; margin: 0; padding: 4px 8px; font-size: 12px;" onclick="removeFisherman(${index})">Видалити</button>
+        </div>
+      `;
+    }
     container.appendChild(card);
   });
+}
+
+function startEditFisherman(index) {
+  editingFishermanIndex = index;
+  renderFishermenList();
+}
+
+function cancelEditFisherman() {
+  editingFishermanIndex = -1;
+  renderFishermenList();
+}
+
+function saveEditedFisherman(index) {
+  let editInput = document.getElementById("edit-fisherman-input");
+  let newName = editInput.value.trim();
+  let oldName = appData.fishermen[index];
+
+  if (!newName) {
+    alert("Ім'я не може бути порожнім!");
+    return;
+  }
+
+  if (newName !== oldName && appData.fishermen.includes(newName)) {
+    alert("Рибалка з таким ім'ям вже існує!");
+    return;
+  }
+
+  appData.fishermen[index] = newName;
+
+  // Оновлюємо записи в чергуваннях, якщо ПІБ було змінено
+  appData.shifts.forEach(shift => {
+    if (shift.guard1 === oldName) shift.guard1 = newName;
+    if (shift.guard2 === oldName) shift.guard2 = newName;
+  });
+
+  appData.fishermen.sort((a, b) => a.localeCompare(b, 'uk'));
+  editingFishermanIndex = -1;
+  saveToCloud();
+  renderFishermenList();
+  alert("Дані рибалки успішно змінено!");
 }
 
 function addFisherman() {
