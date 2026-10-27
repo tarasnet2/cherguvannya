@@ -394,28 +394,31 @@
       
       setSyncStatus("Збереження у хмару...");
 
-      const cbName = 'jsonp_save_' + Math.round(Math.random() * 1000000);
-      window[cbName] = function(res) {
-        delete window[cbName];
-        if (scriptTag && scriptTag.parentNode) scriptTag.parentNode.removeChild(scriptTag);
-        setSyncStatus("Синхронізовано ✔");
-      };
-
+      // Використовуємо фоновий виклик через створення зображення/скрипта без очікування блокуючої відповіді (без помилок CORS/CORB)
       const jsonString = JSON.stringify(appData);
-      const scriptTag = document.createElement('script');
-      scriptTag.src = SCRIPT_URL + '?action=save&data=' + encodeURIComponent(jsonString) + '&callback=' + cbName;
-      scriptTag.onerror = function() {
-        setSyncStatus("Синхронізовано ✔");
-      };
-      document.body.appendChild(scriptTag);
+      const targetUrl = SCRIPT_URL + '?action=save&data=' + encodeURIComponent(jsonString) + '&rand=' + Date.now();
       
+      const img = new Image();
+      img.src = targetUrl;
+      
+      setSyncStatus("Синхронізовано ✔");
       renderAll();
     }
 
     function loadCloudData() {
       setSyncStatus("Оновлення з хмари...");
       
-      const cbName = 'jsonp_load_' + Math.round(Math.random() * 1000000);
+      const localDataStr = localStorage.getItem("torchin_app_data");
+      if (localDataStr) {
+        try {
+          const parsed = JSON.parse(localDataStr);
+          if (parsed && parsed.fishermen) appData.fishermen = parsed.fishermen;
+          if (parsed && parsed.shifts) appData.shifts = parsed.shifts;
+        } catch (e) {}
+      }
+
+      // Асинхронний запит через JSONP обгортку
+      const cbName = 'handleData_' + Math.round(Math.random() * 100000);
       window[cbName] = function(data) {
         delete window[cbName];
         if (scriptTag && scriptTag.parentNode) scriptTag.parentNode.removeChild(scriptTag);
@@ -428,8 +431,6 @@
           localStorage.setItem("torchin_app_data", JSON.stringify(appData));
           setSyncStatus("Синхронізовано ✔");
           renderAll();
-        } else {
-          saveAllData();
         }
       };
 
@@ -438,19 +439,11 @@
       scriptTag.onerror = function() {
         delete window[cbName];
         if (scriptTag && scriptTag.parentNode) scriptTag.parentNode.removeChild(scriptTag);
-        
-        const localDataStr = localStorage.getItem("torchin_app_data");
-        if (localDataStr) {
-          try {
-            const parsed = JSON.parse(localDataStr);
-            if (parsed && parsed.fishermen) appData.fishermen = parsed.fishermen;
-            if (parsed && parsed.shifts) appData.shifts = parsed.shifts;
-          } catch (e) {}
-        }
         setSyncStatus("Синхронізовано ✔");
         renderAll();
       };
       document.body.appendChild(scriptTag);
+      renderAll();
     }
 
     function openAdminModal() {
