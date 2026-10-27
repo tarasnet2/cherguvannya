@@ -353,7 +353,7 @@
   </div>
 
   <script>
-    const API_URL = "https://script.google.com/macros/s/AKfycbxMsstUmnOmFGL98PbhPeucsspzhT0qxo4vZVvxBAw02-KbJEzWQuxQ/exec";
+    const API_URL = "https://script.google.com/macros/s/AKfycbxMsstUmnOmFGL98PbhPeucsspzhTOqxo4vZVvxBAw02-KbJEzWQuxQG5Vkk54Te53IJg/exec";
     
     const defaultFishermen = [
       "Андрій Хілюк", "Ахметов Михайло", "Біда Павло", "Богдан Келер", "Бойко Руслан Іванович", 
@@ -402,27 +402,42 @@
       el.style.color = isError ? "#ef4444" : "#0284c7";
     }
 
+    // Глобальний обробник відповіді з хмари
+    window.handleCloudData = function(data) {
+      if (data && data.status === 'success') {
+        setSyncStatus("Синхронізовано ✔");
+        return;
+      }
+      if (data && (data.shifts || data.fishermen)) {
+        if (data.shifts) appData.shifts = data.shifts;
+        if (data.fishermen && data.fishermen.length > 0) {
+          appData.fishermen = [];
+          data.fishermen.forEach(f => {
+            if (!appData.fishermen.includes(f)) appData.fishermen.push(f);
+          });
+          appData.fishermen.sort((a, b) => a.localeCompare(b, 'uk'));
+        }
+        localStorage.setItem("torchin_app_data", JSON.stringify(appData));
+        setSyncStatus("Синхронізовано ✔");
+        renderAll();
+      }
+    };
+
     function saveAllData() {
       appData.fishermen.sort((a, b) => a.localeCompare(b, 'uk'));
       localStorage.setItem("torchin_app_data", JSON.stringify(appData));
       
       setSyncStatus("Збереження у хмару...");
 
-      // Використовуємо проксі для обходу CORS / CORB блокувань
-      const payload = JSON.stringify({ db: JSON.stringify(appData) });
-      fetch("https://api.allorigins.win/raw?url=" + encodeURIComponent(API_URL + "?action=save"), {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: payload
-      })
-      .then(() => {
-        setSyncStatus("Синхронізовано ✔");
-      })
-      .catch(err => {
-        // Запасний прямий метод без очікування відповіді
-        fetch(API_URL + "?action=save", { method: "POST", mode: "no-cors", body: payload }).catch(e => {});
-        setSyncStatus("Збережено ✔", false);
-      });
+      const dbString = encodeURIComponent(JSON.stringify(appData));
+      const script = document.createElement('script');
+      script.src = `${API_URL}?action=save&db=${dbString}&t=${Date.now()}`;
+      script.onload = function() { script.remove(); };
+      script.onerror = function() {
+        script.remove();
+        setSyncStatus("Збережено локально ⚠", true);
+      };
+      document.body.appendChild(script);
       
       renderAll();
     }
@@ -430,23 +445,14 @@
     function loadCloudData() {
       setSyncStatus("Оновлення з хмари...");
       
-      fetch("https://api.allorigins.win/raw?url=" + encodeURIComponent(API_URL))
-        .then(res => res.json())
-        .then(data => {
-          if (data && data.shifts) appData.shifts = data.shifts;
-          if (data && data.fishermen && data.fishermen.length > 0) {
-            data.fishermen.forEach(f => {
-              if (!appData.fishermen.includes(f)) appData.fishermen.push(f);
-            });
-            appData.fishermen.sort((a, b) => a.localeCompare(b, 'uk'));
-          }
-          localStorage.setItem("torchin_app_data", JSON.stringify(appData));
-          setSyncStatus("Синхронізовано ✔");
-          renderAll();
-        })
-        .catch(err => {
-          setSyncStatus("Режим пам'яті ⚡");
-        });
+      const script = document.createElement('script');
+      script.src = `${API_URL}?action=load&t=${Date.now()}`;
+      script.onload = function() { script.remove(); };
+      script.onerror = function() {
+        script.remove();
+        setSyncStatus("Автономний режим ⚡", true);
+      };
+      document.body.appendChild(script);
     }
 
     function openAdminModal() {
@@ -826,7 +832,7 @@
 
     function confirmShift(dateStr) {
       let shift = appData.shifts.find(s => s.date === dateStr);
-      if (shift) {
+      if        (shift) {
         shift.status = 'confirmed';
         saveAllData();
         closeModal();
