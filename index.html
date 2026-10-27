@@ -353,10 +353,8 @@
   </div>
 
   <script>
-    // Оновлені дані JSONBin з новим Bin ID
     const BIN_ID = "6ae10349ffd5d1605390ef8a";
     const API_KEY = "$2a$10$rTZ0v7aupn8Xm1HLZ4RFBeFHgaBCEGmN29E07CRGZXirXhK7nkXfC";
-    
     const BIN_URL = `https://api.jsonbin.io/v3/b/${BIN_ID}`;
 
     const defaultFishermen = [
@@ -382,20 +380,7 @@
     let editingFishermanIndex = -1;
 
     function initApp() {
-      const localDataStr = localStorage.getItem("torchin_app_data");
-      if (localDataStr) {
-        try {
-          const parsed = JSON.parse(localDataStr);
-          if (parsed && parsed.fishermen && parsed.fishermen.length > 0) {
-            appData.fishermen = parsed.fishermen;
-          }
-          if (parsed && parsed.shifts) {
-            appData.shifts = parsed.shifts;
-          }
-        } catch (e) {}
-      }
-      appData.fishermen = [...new Set(appData.fishermen)].filter(f => f && f.trim() !== "").sort((a, b) => a.localeCompare(b, 'uk'));
-      renderAll();
+      // Спочатку першочергово запитуємо дані з хмари
       loadCloudData();
     }
 
@@ -437,7 +422,7 @@
     function loadCloudData() {
       setSyncStatus("Оновлення з хмари...");
       
-      fetch(BIN_URL + "/latest", {
+      fetch(BIN_URL + "/latest?nc=" + Date.now(), {
         headers: {
           "X-Master-Key": API_KEY
         }
@@ -458,7 +443,17 @@
         }
       })
       .catch(err => {
+        // Якщо хмара недоступна, беремо з локальної пам'яті
+        const localDataStr = localStorage.getItem("torchin_app_data");
+        if (localDataStr) {
+          try {
+            const parsed = JSON.parse(localDataStr);
+            if (parsed && parsed.fishermen) appData.fishermen = parsed.fishermen;
+            if (parsed && parsed.shifts) appData.shifts = parsed.shifts;
+          } catch (e) {}
+        }
         setSyncStatus("Автономний режим ⚡", true);
+        renderAll();
       });
     }
 
@@ -863,7 +858,6 @@
       if (!document.getElementById("tab-settings").classList.contains("hidden")) renderFishermenList();
     }
 
-    // Запуск додатка
     initApp();
   </script>
 </body>
