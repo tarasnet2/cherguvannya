@@ -353,8 +353,12 @@
   </div>
 
   <script>
-    const API_URL = "https://script.google.com/macros/s/AKfycbxMsstUmnOmFGL98PbhPeucsspzhTOqxo4vZVvxBAw02-KbJEzWQuxQG5Vkk54Te53IJg/exec";
+    // Ваші дані JSONBin
+    const BIN_ID = "671216d2e41b4d34e444452a";
+    const API_KEY = "$2a$10$wN9iL6j3q3c8l7k5h2Z1o.u9xY5v3b2n1m4K6j8h9g0f1d3s5a7q9"; // Замініть на свій повний Master Key із сайту JSONBin, якщо він відрізняється
     
+    const BIN_URL = `https://api.jsonbin.io/v3/b/${BIN_ID}`;
+
     const defaultFishermen = [
       "Андрій Хілюк", "Ахметов Михайло", "Біда Павло", "Богдан Келер", "Бойко Руслан Іванович", 
       "Бомазюк Григорій Полікарпович", "Бохонський Микола", "Вовк Віктор", "Вовк Саша", 
@@ -390,7 +394,7 @@
           }
         } catch (e) {}
       }
-      appData.fishermen.sort((a, b) => a.localeCompare(b, 'uk'));
+      appData.fishermen = [...new Set(appData.fishermen)].filter(f => f && f.trim() !== "").sort((a, b) => a.localeCompare(b, 'uk'));
       renderAll();
       loadCloudData();
     }
@@ -403,53 +407,59 @@
     }
 
     function saveAllData() {
-      appData.fishermen.sort((a, b) => a.localeCompare(b, 'uk'));
+      appData.fishermen = [...new Set(appData.fishermen)].filter(f => f && f.trim() !== "").sort((a, b) => a.localeCompare(b, 'uk'));
       localStorage.setItem("torchin_app_data", JSON.stringify(appData));
       
       setSyncStatus("Збереження у хмару...");
 
-      // Використовуємо фоновий виклик зображення для надійного надходження GET-запиту без CORS блокувань
-      const dbString = encodeURIComponent(JSON.stringify(appData));
-      const img = new Image();
-      img.src = `${API_URL}?action=save&db=${dbString}&t=${Date.now()}`;
-      img.onload = function() { setSyncStatus("Синхронізовано ✔"); };
-      img.onerror = function() { setSyncStatus("Синхронізовано ✔"); };
-
-      setTimeout(() => { setSyncStatus("Синхронізовано ✔"); }, 800);
+      fetch(BIN_URL, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Master-Key": API_KEY
+        },
+        body: JSON.stringify(appData)
+      })
+      .then(res => {
+        if (res.ok) {
+          setSyncStatus("Синхронізовано ✔");
+        } else {
+          setSyncStatus("Збережено локально ⚠", true);
+        }
+      })
+      .catch(err => {
+        setSyncStatus("Збережено локально ⚠", true);
+      });
+      
       renderAll();
     }
 
     function loadCloudData() {
       setSyncStatus("Оновлення з хмари...");
       
-      // Завантаження даних через стандартний метод із обходом через JSONP-подібний виклик у iframe або script
-      const script = document.createElement('script');
-      script.src = `${API_URL}?action=load&t=${Date.now()}`;
-      
-      window.handleCloudData = function(data) {
-        delete window.handleCloudData;
-        script.remove();
-        if (data && (data.shifts || data.fishermen)) {
-          if (data.shifts) appData.shifts = data.shifts;
-          if (data.fishermen && data.fishermen.length > 0) {
-            appData.fishermen = [];
-            data.fishermen.forEach(f => {
-              if (!appData.fishermen.includes(f)) appData.fishermen.push(f);
-            });
-            appData.fishermen.sort((a, b) => a.localeCompare(b, 'uk'));
+      fetch(BIN_URL + "/latest", {
+        headers: {
+          "X-Master-Key": API_KEY
+        }
+      })
+      .then(res => res.json())
+      .then(resData => {
+        let data = resData.record || resData;
+        if (data) {
+          if (data.shifts && Array.isArray(data.shifts)) {
+            appData.shifts = data.shifts;
+          }
+          if (data.fishermen && Array.isArray(data.fishermen) && data.fishermen.length > 0) {
+            appData.fishermen = [...new Set(data.fishermen)].filter(f => f && f.trim() !== "").sort((a, b) => a.localeCompare(b, 'uk'));
           }
           localStorage.setItem("torchin_app_data", JSON.stringify(appData));
           setSyncStatus("Синхронізовано ✔");
           renderAll();
         }
-      };
-
-      script.onerror = function() {
-        script.remove();
+      })
+      .catch(err => {
         setSyncStatus("Автономний режим ⚡", true);
-      };
-
-      document.body.appendChild(script);
+      });
     }
 
     function openAdminModal() {
@@ -538,7 +548,7 @@
         let dayStr = String(day).padStart(2, '0');
         let dateStr = `${year}-${monthStr}-${dayStr}`;
 
-        let shift = appData.shifts.find(s => s.date === dateStr);
+        let shift = appData.shifts.find(s => s && s.date === dateStr);
         let htmlContent = `<div class="cal-date-num">${day}</div>`;
 
         if (shift && shift.guard1 && shift.guard1 !== "undefined") {
@@ -558,7 +568,7 @@
         container.appendChild(cell);
       }
 
-      let pendingCount = appData.shifts.filter(s => s.status === 'pending' && s.guard1 && s.guard1 !== "undefined").length;
+      let pendingCount = appData.shifts.filter(s => s && s.status === 'pending' && s.guard1 && s.guard1 !== "undefined").length;
       document.getElementById("pending-count").innerText = pendingCount;
     }
 
@@ -648,7 +658,7 @@
         return;
       }
 
-      appData.shifts = appData.shifts.filter(s => s.date !== selectedDateStr);
+      appData.shifts = appData.shifts.filter(s => s && s.date !== selectedDateStr);
       let statusVal = (currentUser.role === 'admin') ? 'confirmed' : 'pending';
 
       appData.shifts.push({
@@ -726,8 +736,10 @@
       appData.fishermen[index] = newName;
 
       appData.shifts.forEach(shift => {
-        if (shift.guard1 === oldName) shift.guard1 = newName;
-        if (shift.guard2 === oldName) shift.guard2 = newName;
+        if (shift) {
+          if (shift.guard1 === oldName) shift.guard1 = newName;
+          if (shift.guard2 === oldName) shift.guard2 = newName;
+        }
       });
 
       editingFishermanIndex = -1;  
@@ -776,7 +788,7 @@
       appData.fishermen.forEach(f => counts[f] = 0);
 
       appData.shifts.forEach(s => {
-        if (s.status === 'confirmed' && s.guard1 && s.guard1 !== "undefined") {
+        if (s && s.status === 'confirmed' && s.guard1 && s.guard1 !== "undefined") {
           if (counts[s.guard1] !== undefined) counts[s.guard1]++;
           if (s.guard2 && counts[s.guard2] !== undefined) counts[s.guard2]++;
         }
@@ -800,7 +812,7 @@
       if (!container) return;
       container.innerHTML = "";
 
-      let pendingShifts = appData.shifts.filter(s => s.status === 'pending' && s.guard1 && s.guard1 !== "undefined");
+      let pendingShifts = appData.shifts.filter(s => s && s.status === 'pending' && s.guard1 && s.guard1 !== "undefined");
 
       if (pendingShifts.length === 0) {
         container.innerHTML = `<p style="text-align: center; color: var(--text-muted); margin-top: 15px; font-size: 13px;">Немає нових заявок</p>`;
@@ -828,7 +840,7 @@
     }
 
     function confirmShift(dateStr) {
-      let shift = appData.shifts.find(s => s.date === dateStr);
+      let shift = appData.shifts.find(s => s && s.date === dateStr);
       if (shift) {
         shift.status = 'confirmed';
         saveAllData();
@@ -838,7 +850,7 @@
     }
 
     function rejectShift(dateStr) {
-      appData.shifts = appData.shifts.filter(s => s.date !== dateStr);
+      appData.shifts = appData.shifts.filter(s => s && s.date !== dateStr);
       saveAllData();
       closeModal();
       alert("Заявку відхилено / чергування скасовано.");
