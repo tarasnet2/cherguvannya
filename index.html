@@ -408,41 +408,53 @@
       
       setSyncStatus("Збереження у хмару...");
 
-      fetch(API_URL + "?action=save", {
-        method: "POST",
-        mode: "no-cors",
-        headers: { "Content-Type": "text/plain; charset=utf-8" },
-        body: JSON.stringify({ db: JSON.stringify(appData) })
-      })
-      .then(() => {
+      // Використовуємо JSONP через створення скрипта для обходу CORS блокувань браузера
+      const callbackName = 'sync_cb_' + Math.round(Math.random() * 1000000);
+      window[callbackName] = function(response) {
+        delete window[callbackName];
+        if(document.getElementById('jsonp_script')) document.getElementById('jsonp_script').remove();
         setSyncStatus("Синхронізовано ✔");
-      })
-      .catch(err => {
+      };
+
+      const script = document.createElement('script');
+      script.id = 'jsonp_script';
+      const encodedData = encodeURIComponent(JSON.stringify(appData));
+      script.src = `${API_URL}?action=save&db=${encodedData}&callback=${callbackName}`;
+      script.onerror = function() {
         setSyncStatus("Збережено локально ⚠", true);
-      });
+      };
+      document.body.appendChild(script);
       
       renderAll();
     }
 
     function loadCloudData() {
       setSyncStatus("Оновлення з хмари...");
-      fetch(API_URL)
-        .then(res => res.json())
-        .then(data => {
-          if (data && data.shifts) appData.shifts = data.shifts;
-          if (data && data.fishermen && data.fishermen.length > 0) {
-            data.fishermen.forEach(f => {
-              if (!appData.fishermen.includes(f)) appData.fishermen.push(f);
-            });
-            appData.fishermen.sort((a, b) => a.localeCompare(b, 'uk'));
-          }
-          localStorage.setItem("torchin_app_data", JSON.stringify(appData));
-          setSyncStatus("Синхронізовано ✔");
-          renderAll();
-        })
-        .catch(err => {
-          setSyncStatus("Автономний режим ⚡");
-        });
+      
+      const callbackName = 'load_cb_' + Math.round(Math.random() * 1000000);
+      window[callbackName] = function(data) {
+        delete window[callbackName];
+        if(document.getElementById('jsonp_load_script')) document.getElementById('jsonp_load_script').remove();
+        
+        if (data && data.shifts) appData.shifts = data.shifts;
+        if (data && data.fishermen && data.fishermen.length > 0) {
+          data.fishermen.forEach(f => {
+            if (!appData.fishermen.includes(f)) appData.fishermen.push(f);
+          });
+          appData.fishermen.sort((a, b) => a.localeCompare(b, 'uk'));
+        }
+        localStorage.setItem("torchin_app_data", JSON.stringify(appData));
+        setSyncStatus("Синхронізовано ✔");
+        renderAll();
+      };
+
+      const script = document.createElement('script');
+      script.id = 'jsonp_load_script';
+      script.src = `${API_URL}?action=load&callback=${callbackName}`;
+      script.onerror = function() {
+        setSyncStatus("Автономний режим ⚡");
+      };
+      document.body.appendChild(script);
     }
 
     function openAdminModal() {
