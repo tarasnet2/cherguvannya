@@ -353,9 +353,8 @@
   </div>
 
   <script>
-    const BIN_ID = "6ae10349ffd5d1605390ef8a";
-    const API_KEY = "$2a$10$rTZ0v7aupn8Xm1HLZ4RFBeFHgaBCEGmN29E07CRGZXirXhK7nkXfC";
-    const BIN_URL = `https://api.jsonbin.io/v3/b/${BIN_ID}`;
+    // Посилання на ваш Google Apps Script Web App
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxQbAYZI-FyePofYLYJyWTOe9QKAN_1ZrFUwIwjJ1EgcdQZzfzpo2mLqo7XAm2C5XXf2g/exec";
 
     const defaultFishermen = [
       "Андрій Хілюк", "Ахметов Михайло", "Біда Павло", "Богдан Келер", "Бойко Руслан Іванович", 
@@ -396,32 +395,16 @@
       
       setSyncStatus("Збереження у хмару...");
 
-      // Використовуємо mode: 'cors' із залученням стандартного проксі для обходу браузерних блокувань
-      fetch(`https://api.allorigins.win/raw?url=` + encodeURIComponent(BIN_URL), {
-        method: "PUT",
+      fetch(SCRIPT_URL, {
+        method: "POST",
+        mode: "no-cors",
         headers: {
-          "Content-Type": "application/json",
-          "X-Master-Key": API_KEY
+          "Content-Type": "text/plain;charset=utf-8"
         },
         body: JSON.stringify(appData)
       })
-      .then(res => {
-        if (res.ok) {
-          setSyncStatus("Синхронізовано ✔");
-        } else {
-          // Запасний варіант прямих запитів через JSONBin безпосередньо
-          return fetch(BIN_URL, {
-            method: "PUT",
-            headers: {
-              "Content-Type": "application/json",
-              "X-Master-Key": API_KEY
-            },
-            body: JSON.stringify(appData)
-          }).then(r => {
-            if (r.ok) setSyncStatus("Синхронізовано ✔");
-            else setSyncStatus("Збережено локально ⚠", true);
-          });
-        }
+      .then(() => {
+        setSyncStatus("Синхронізовано ✔");
       })
       .catch(err => {
         setSyncStatus("Збережено локально ⚠", true);
@@ -433,15 +416,10 @@
     function loadCloudData() {
       setSyncStatus("Оновлення з хмари...");
       
-      fetch(BIN_URL + "/latest?nc=" + Date.now(), {
-        headers: {
-          "X-Master-Key": API_KEY
-        }
-      })
+      fetch(SCRIPT_URL + "?nc=" + Date.now())
       .then(res => res.json())
-      .then(resData => {
-        let data = resData.record || resData;
-        if (data) {
+      .then(data => {
+        if (data && (data.shifts || data.fishermen)) {
           if (data.shifts && Array.isArray(data.shifts)) {
             appData.shifts = data.shifts;
           }
@@ -451,6 +429,9 @@
           localStorage.setItem("torchin_app_data", JSON.stringify(appData));
           setSyncStatus("Синхронізовано ✔");
           renderAll();
+        } else {
+          // Якщо таблиця пуста, відправляємо дефолтні дані на серверну частину
+          saveAllData();
         }
       })
       .catch(err => {
