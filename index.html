@@ -394,15 +394,20 @@
       
       setSyncStatus("Збереження у хмару...");
 
-      const proxyUrl = "https://api.allorigins.win/raw?url=" + encodeURIComponent(SCRIPT_URL + "?action=save&data=" + encodeURIComponent(JSON.stringify(appData)));
+      const cbName = 'jsonp_save_' + Math.round(Math.random() * 1000000);
+      window[cbName] = function(res) {
+        delete window[cbName];
+        if (scriptTag && scriptTag.parentNode) scriptTag.parentNode.removeChild(scriptTag);
+        setSyncStatus("Синхронізовано ✔");
+      };
 
-      fetch(proxyUrl)
-        .then(() => {
-          setSyncStatus("Синхронізовано ✔");
-        })
-        .catch(() => {
-          setSyncStatus("Синхронізовано ✔");
-        });
+      const jsonString = JSON.stringify(appData);
+      const scriptTag = document.createElement('script');
+      scriptTag.src = SCRIPT_URL + '?action=save&data=' + encodeURIComponent(jsonString) + '&callback=' + cbName;
+      scriptTag.onerror = function() {
+        setSyncStatus("Синхронізовано ✔");
+      };
+      document.body.appendChild(scriptTag);
       
       renderAll();
     }
@@ -410,15 +415,13 @@
     function loadCloudData() {
       setSyncStatus("Оновлення з хмари...");
       
-      const proxyUrl = "https://api.allorigins.win/raw?url=" + encodeURIComponent(SCRIPT_URL + "?action=get&nc=" + Date.now());
-
-      fetch(proxyUrl)
-      .then(res => res.json())
-      .then(data => {
+      const cbName = 'jsonp_load_' + Math.round(Math.random() * 1000000);
+      window[cbName] = function(data) {
+        delete window[cbName];
+        if (scriptTag && scriptTag.parentNode) scriptTag.parentNode.removeChild(scriptTag);
+        
         if (data && (data.shifts || data.fishermen)) {
-          if (data.shifts && Array.isArray(data.shifts)) {
-            appData.shifts = data.shifts;
-          }
+          if (data.shifts && Array.isArray(data.shifts)) appData.shifts = data.shifts;
           if (data.fishermen && Array.isArray(data.fishermen) && data.fishermen.length > 0) {
             appData.fishermen = [...new Set(data.fishermen)].filter(f => f && f.trim() !== "").sort((a, b) => a.localeCompare(b, 'uk'));
           }
@@ -428,8 +431,14 @@
         } else {
           saveAllData();
         }
-      })
-      .catch(err => {
+      };
+
+      const scriptTag = document.createElement('script');
+      scriptTag.src = SCRIPT_URL + '?action=get&nc=' + Date.now() + '&callback=' + cbName;
+      scriptTag.onerror = function() {
+        delete window[cbName];
+        if (scriptTag && scriptTag.parentNode) scriptTag.parentNode.removeChild(scriptTag);
+        
         const localDataStr = localStorage.getItem("torchin_app_data");
         if (localDataStr) {
           try {
@@ -440,7 +449,8 @@
         }
         setSyncStatus("Синхронізовано ✔");
         renderAll();
-      });
+      };
+      document.body.appendChild(scriptTag);
     }
 
     function openAdminModal() {
