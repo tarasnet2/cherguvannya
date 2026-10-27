@@ -394,22 +394,17 @@
       
       setSyncStatus("Збереження у хмару...");
 
-      // Використовуємо JSONP метод для обходу блокувань запитів запису з сайту у Google Apps Script
-      const callbackName = 'jsonp_callback_' + Math.round(100000 * Math.random());
-      const scriptTag = document.createElement('script');
+      const jsonString = JSON.stringify(appData);
+      const url = SCRIPT_URL + '?action=save&data=' + encodeURIComponent(jsonString) + '&rand=' + Date.now();
       
-      window[callbackName] = function(response) {
-        delete window[callbackName];
-        document.body.removeChild(scriptTag);
-        setSyncStatus("Синхронізовано ✔");
-      };
-
-      scriptTag.src = SCRIPT_URL + '?action=save&data=' + encodeURIComponent(JSON.stringify(appData)) + '&callback=' + callbackName;
-      scriptTag.onerror = function() {
-        setSyncStatus("Синхронізовано ✔"); // Навіть при помилці скрипта дані надійно залишаються в локальній пам'яті
-      };
+      fetch(url, { method: 'GET', mode: 'no-cors' })
+        .then(() => {
+          setSyncStatus("Синхронізовано ✔");
+        })
+        .catch(() => {
+          setSyncStatus("Збережено локально ⚠", true);
+        });
       
-      document.body.appendChild(scriptTag);
       renderAll();
     }
 
