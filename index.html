@@ -380,7 +380,6 @@
     let editingFishermanIndex = -1;
 
     function initApp() {
-      // Спочатку першочергово запитуємо дані з хмари
       loadCloudData();
     }
 
@@ -397,7 +396,8 @@
       
       setSyncStatus("Збереження у хмару...");
 
-      fetch(BIN_URL, {
+      // Використовуємо mode: 'cors' із залученням стандартного проксі для обходу браузерних блокувань
+      fetch(`https://api.allorigins.win/raw?url=` + encodeURIComponent(BIN_URL), {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -409,7 +409,18 @@
         if (res.ok) {
           setSyncStatus("Синхронізовано ✔");
         } else {
-          setSyncStatus("Збережено локально ⚠", true);
+          // Запасний варіант прямих запитів через JSONBin безпосередньо
+          return fetch(BIN_URL, {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json",
+              "X-Master-Key": API_KEY
+            },
+            body: JSON.stringify(appData)
+          }).then(r => {
+            if (r.ok) setSyncStatus("Синхронізовано ✔");
+            else setSyncStatus("Збережено локально ⚠", true);
+          });
         }
       })
       .catch(err => {
@@ -443,7 +454,6 @@
         }
       })
       .catch(err => {
-        // Якщо хмара недоступна, беремо з локальної пам'яті
         const localDataStr = localStorage.getItem("torchin_app_data");
         if (localDataStr) {
           try {
