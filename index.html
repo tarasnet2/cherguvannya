@@ -232,18 +232,6 @@
       border: 1px solid var(--border);
       box-shadow: 0 15px 25px rgba(0,0,0,0.1);
     }
-    .notification-banner {
-      background: #fef3c7;
-      border: 1px solid #f59e0b;
-      color: #92400e;
-      padding: 10px;
-      border-radius: 8px;
-      margin-bottom: 12px;
-      font-size: 13px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
     .edit-name-group {
       display: flex;
       gap: 6px;
@@ -254,36 +242,59 @@
       font-size: 13px;
       margin: 0;
     }
+    .login-toggle {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+    .login-toggle button {
+      flex: 1;
+      padding: 8px;
+      font-size: 13px;
+      background: #e2e8f0;
+      color: #475569;
+    }
+    .login-toggle button.active {
+      background: var(--accent);
+      color: white;
+    }
   </style>
 </head>
 <body>
   <div class="container">
     <h2>Водойма Торчин</h2>
     
-    <!-- БЛОК АВТОРИЗАЦІЇ -->
+    <!-- БЛОК ВХОДУ -->
     <div id="login-section">
       <div id="login-error" class="alert hidden">Невірний логін або пароль</div>
-      <div class="form-group">
-        <label for="username">Логін (Ваше Прізвище та Ім'я або admin):</label>
-        <input type="text" id="username" placeholder="Наприклад: Улітовський Тарас">
+      
+      <div class="login-toggle">
+        <button id="toggle-user-btn" class="active" onclick="setLoginMode('user')">Вхід / Перегляд</button>
+        <button id="toggle-admin-btn" onclick="setLoginMode('admin')">Вхід для Адміна</button>
       </div>
-      <div class="form-group">
-        <label for="password">Пароль:</label>
-        <input type="password" id="password" placeholder="Введіть пароль">
+
+      <div id="user-login-box">
+        <div class="form-group">
+          <label for="username-select">Оберіть ваше ім'я для забронювання варти:</label>
+          <select id="username-select"></select>
+        </div>
+        <button onclick="handleUserLogin()">Зайти на сайт</button>
       </div>
-      <button onclick="handleLogin()">Увійти в систему</button>
+
+      <div id="admin-login-box" class="hidden">
+        <div class="form-group">
+          <label for="admin-password">Пароль адміністратора:</label>
+          <input type="password" id="admin-password" placeholder="Введіть пароль адміна">
+        </div>
+        <button class="btn-orange" onclick="handleAdminLogin()">Увійти як Адмін</button>
+      </div>
     </div>
 
     <!-- ОСНОВНИЙ ІНТЕРФЕЙС -->
     <div id="app-section" class="hidden">
-      <div id="notif-banner" class="notification-banner hidden">
-        <span>Увімкніть сповіщення, щоб отримувати нагадування за 3 дні та за 1 день до варти!</span>
-        <button onclick="requestNotificationPermission()" style="width: auto; margin: 0; padding: 4px 8px; font-size: 12px;">Увімкнути</button>
-      </div>
-
       <div class="user-header">
         <span id="welcome-user" style="font-weight: bold; color: var(--accent);">Вітаю</span>
-        <button class="btn-danger" style="width: auto; padding: 5px 10px; margin: 0; font-size: 13px;" onclick="handleLogout()">Вийти</button>
+        <button class="btn-danger" style="width: auto; padding: 5px 10px; margin: 0; font-size: 13px;" onclick="handleLogout()">Вийти / Змінити користувача</button>
       </div>
 
       <!-- Меню вкладок -->
@@ -311,7 +322,7 @@
           <div class="calendar-day-name">Нд</div>
         </div>
         <div class="calendar-grid" id="calendar-days-container" style="margin-top: 5px;"></div>
-        <p style="font-size: 12px; color: var(--text-muted); text-align: center; margin-top: 12px;">Натисніть на день, щоб призначити або забронювати варту.</p>
+        <p style="font-size: 12px; color: var(--text-muted); text-align: center; margin-top: 12px;">Натисніть на день, щоб забронювати чи переглянути варту.</p>
       </div>
 
       <!-- ВКЛАДКА 2: СТАТИСТИКА -->
@@ -370,18 +381,21 @@
 
   <script>
     const API_URL = "https://script.google.com/macros/s/AKfycbxMsstUmnOmFGL98PbhPeucsspzhT0qxo4vZVvxBAw02-KbJEzWQuxQ";
+    
+    const defaultFishermen = [
+      "Андрій Хілюк", "Ахметов Михайло", "Біда Павло", "Богдан Келер", "Бойко Руслан Іванович", 
+      "Бомазюк Григорій Полікарпович", "Бохонський Микола", "Вовк Віктор", "Вовк Саша", 
+      "Гвоздик Володимир", "Грищук Віктор", "Дідич Сергій", "Дорощук Богдан", "Замелюк Володимир", 
+      "Зінчук Міша", "Карпук Валерій", "Кондисюк Саша", "Кузьмінчук Олександр", "Купцов Леонід", 
+      "Ліпич Богдан", "Лопухович Сергій", "Микола Вавринчук", "Михайлюк Омелян", "Міщук Анатолій", 
+      "Назарко Ігор", "Назарук Віталій", "Неволін Ігор", "Олексюк Олександр", "Пилипчук Віктор", 
+      "Піцик Сергій", "Порва Віктор", "Рогацько Віталій", "Санчик Петро", "Саша Трохимович", 
+      "Сачковський Саша", "Стоянович Іван", "Стоянович Саша (стар)", "Тлучкевич Валентин", 
+      "Тлучкевич Олег", "Улітовський Тарас", "Хавань Борис", "Харитонов Володимир"
+    ];
+
     let appData = {
-      fishermen: [
-        "Андрій Хілюк", "Ахметов Михайло", "Біда Павло", "Богдан Келер", "Бойко Руслан Іванович", 
-        "Бомазюк Григорій Полікарпович", "Бохонський Микола", "Вовк Віктор", "Вовк Саша", 
-        "Гвоздик Володимир", "Грищук Віктор", "Дідич Сергій", "Дорощук Богдан", "Замелюк Володимир", 
-        "Зінчук Міша", "Карпук Валерій", "Кондисюк Саша", "Кузьмінчук Олександр", "Купцов Леонід", 
-        "Ліпич Богдан", "Лопухович Сергій", "Микола Вавринчук", "Михайлюк Омелян", "Міщук Анатолій", 
-        "Назарко Ігор", "Назарук Віталій", "Неволін Ігор", "Олексюк Олександр", "Пилипчук Віктор", 
-        "Піцик Сергій", "Порва Віктор", "Рогацько Віталій", "Санчик Петро", "Саша Трохимович", 
-        "Сачковський Саша", "Стоянович Іван", "Стоянович Саша (стар)", "Тлучкевич Валентин", 
-        "Тлучкевич Олег", "Улітовський Тарас", "Хавань Борис", "Харитонов Володимир"
-      ],
+      fishermen: [],
       shifts: []
     };
 
@@ -390,518 +404,7 @@
     let selectedDateStr = null;
     let editingFishermanIndex = -1;
 
-    function checkNotificationPermission() {
-      if (!("Notification" in window)) return;
-      const banner = document.getElementById("notif-banner");
-      if (Notification.permission === "default") {
-        banner.classList.remove("hidden");
-      } else {
-        banner.classList.add("hidden");
-      }
-    }
-
-    function requestNotificationPermission() {
-      if (!("Notification" in window)) {
-        alert("Ваш браузер не підтримує сповіщення.");
-        return;
-      }
-      Notification.requestPermission().then(permission => {
-        if (permission === "granted") {
-          document.getElementById("notif-banner").classList.add("hidden");
-          alert("Сповіщення увімкнено! Ви отримуватимете нагадування про варту.");
-          checkUserShiftReminders();
-        }
-      });
-    }
-
-    function checkUserShiftReminders() {
-      if (!currentUser || currentUser.role === "admin" || Notification.permission !== "granted") return;
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      const sentNotifs = JSON.parse(localStorage.getItem("sentShiftNotifs") || "{}");
-
-      appData.shifts.forEach(shift => {
-        if (shift.status !== 'confirmed') return;
-        if (shift.guard1 !== currentUser.username && shift.guard2 !== currentUser.username) return;
-
-        const shiftDate = new Date(shift.date);
-        shiftDate.setHours(0, 0, 0, 0);
-        const diffDays = Math.round((shiftDate - today) / (1000 * 60 * 60 * 24));
-
-        if (diffDays === 3) {
-          const key = `${shift.date}_3days_${currentUser.username}`;
-          if (!sentNotifs[key]) {
-            new Notification("Нагадування про варту (Водойма Торчин)", {
-              body: `Увага! Через 3 дні (${shift.date}) у вас чергування!`,
-              icon: "https://cdn-icons-png.flaticon.com/512/2913/2913520.png"
-            });
-            sentNotifs[key] = true;
-          }
-        } else if (diffDays === 1) {
-          const key = `${shift.date}_1day_${currentUser.username}`;
-          if (!sentNotifs[key]) {
-            new Notification("Термінове нагадування (Водойма Торчин)", {
-              body: `Завтра (${shift.date}) ваше чергування! Будь ласка, не забудьте.`,
-              icon: "https://cdn-icons-png.flaticon.com/512/2913/2913520.png"
-            });
-            sentNotifs[key] = true;
-          }
-        }
-      });
-      localStorage.setItem("sentShiftNotifs", JSON.stringify(sentNotifs));
-    }
-
-    function handleLogin() {
-      const userField = document.getElementById("username").value.trim();
-      const passField = document.getElementById("password").value.trim();
-      const errorBox = document.getElementById("login-error");
-
-      if (!userField) {
-        errorBox.innerText = "Введіть ваше Прізвище та Ім'я";
-        errorBox.classList.remove("hidden");
-        return;
-      }
-
-      if (userField.toLowerCase() === "admin" && passField === "admin123") {
-        grantAccess({ username: "Адміністратор", role: "admin" });
-        return;
-      }
-
-      let foundFisherman = appData.fishermen.find(f => f.toLowerCase() === userField.toLowerCase());
-      if (foundFisherman) {
-        grantAccess({ username: foundFisherman, role: "user" });
-      } else {
-        appData.fishermen.push(userField);
-        appData.fishermen.sort((a, b) => a.localeCompare(b, 'uk'));
-        grantAccess({ username: userField, role: "user" });
-        saveToCloud();
-      }
-    }
-
-    function grantAccess(userData) {
-      currentUser = userData;
-      document.getElementById("login-error").classList.add("hidden");
-      document.getElementById("login-section").classList.add("hidden");
-      document.getElementById("app-section").classList.remove("hidden");
-      document.getElementById("welcome-user").innerText = `${currentUser.username} (${currentUser.role === 'admin' ? 'Адмін' : 'Учасник'})`;
-
-      if (currentUser.role === "admin") {
-        document.getElementById("admin-tab-btn").classList.remove("hidden");
-        document.getElementById("settings-tab-btn").classList.remove("hidden");
-      } else {
-        document.getElementById("admin-tab-btn").classList.add("hidden");
-        document.getElementById("settings-tab-btn").classList.add("hidden");
-        checkNotificationPermission();
-      }
-      loadAppData();
-    }
-
-    function handleLogout() {
-      currentUser = null;
-      document.getElementById("app-section").classList.add("hidden");
-      document.getElementById("login-section").classList.remove("hidden");
-      document.getElementById("username").value = "";
-      document.getElementById("password").value = "";
-    }
-
-    function loadAppData() {
-      fetch(API_URL)
-        .then(res => res.json())
-        .then(data => {
-          if (data && data.shifts) appData.shifts = data.shifts;
-          if (data && data.fishermen && data.fishermen.length > 0) {
-            data.fishermen.forEach(f => {
-              if (!appData.fishermen.includes(f)) appData.fishermen.push(f);
-            });
-            appData.fishermen.sort((a, b) => a.localeCompare(b, 'uk'));
-          }
-          renderAll();
-          checkUserShiftReminders();
-        })
-        .catch(err => {
-          renderAll();
-        });
-    }
-
-    function saveToCloud() {
-      fetch(API_URL + "?action=save", {
-        method: "POST",
-        headers: { "Content-Type": "text/plain; charset=utf-8" },
-        body: JSON.stringify({ db: JSON.stringify(appData) })
-      })
-      .then(res => res.json())
-      .then(res => { renderAll(); })
-      .catch(err => { renderAll(); });
-    }
-
-    function switchTab(tabName, event) {
-      document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
-      document.querySelectorAll('.nav-tab').forEach(el => el.classList.remove('active'));
-
-      if (tabName === 'calendar') {
-        document.getElementById('tab-calendar').classList.remove('hidden');
-        event.target.classList.add('active');
-      } else if (tabName === 'stats') {
-        document.getElementById('tab-stats').classList.remove('hidden');
-        event.target.classList.add('active');
-        renderStats();
-      } else if (tabName === 'admin') {
-        document.getElementById('tab-admin').classList.remove('hidden');
-        document.getElementById('admin-tab-btn').classList.add('active');
-        renderAdminRequests();
-      } else if (tabName === 'settings') {
-        document.getElementById('tab-settings').classList.remove('hidden');
-        document.getElementById('settings-tab-btn').classList.add('active');
-        renderFishermenList();
-      }
-    }
-
-    function renderCalendar() {
-      const year = currentNavDate.getFullYear();
-      const month = currentNavDate.getMonth();
-      const monthNames = ["Січень", "Лютий", "Березень", "Квітень", "Травень", "Червень", "Липень", "Серпень", "Вересень", "Жовтень", "Листопад", "Грудень"];
-      document.getElementById("calendar-month-title").innerText = `${monthNames[month]} ${year}`;
-      const container = document.getElementById("calendar-days-container");
-      container.innerHTML = "";
-
-      const firstDayIndex = (new Date(year, month, 1).getDay() + 6) % 7;
-      const totalDays = new Date(year, month + 1, 0).getDate();
-
-      for (let i = 0; i < firstDayIndex; i++) {
-        let cell = document.createElement("div");
-        cell.className = "cal-day empty";
-        container.appendChild(cell);
-      }
-
-      for (let day = 1; day <= totalDays; day++) {
-        let cell = document.createElement("div");
-        cell.className = "cal-day";
-        let monthStr = String(month + 1).padStart(2, '0');
-        let dayStr = String(day).padStart(2, '0');
-        let dateStr = `${year}-${monthStr}-${dayStr}`;
-
-        let shift = appData.shifts.find(s => s.date === dateStr);
-        let htmlContent = `<div class="cal-date-num">${day}</div>`;
-
-        if (shift && shift.guard1 && shift.guard1 !== "undefined") {
-          let g1Short = shift.guard1.split(' ')[0];
-          let g2Short = shift.guard2 ? shift.guard2.split(' ')[0] : '';
-          let displayGuards = shift.guard2 ? `${g1Short}<br>${g2Short}` : g1Short;
-
-          if (shift.status === 'confirmed') {
-            htmlContent += `<div class="shift-badge badge-confirmed" title="Сторожують: ${shift.guard1} ${shift.guard2}">${displayGuards}</div>`;
-          } else {
-            htmlContent += `<div class="shift-badge badge-pending" title="Очікує підтвердження">${displayGuards}</div>`;
-          }
-        }
-
-        cell.innerHTML = htmlContent;
-        cell.onclick = () => openBookingModal(dateStr, shift);
-        container.appendChild(cell);
-      }
-
-      let pendingCount = appData.shifts.filter(s => s.status === 'pending' && s.guard1 && s.guard1 !== "undefined").length;
-      document.getElementById("pending-count").innerText = pendingCount;
-    }
-
-    function changeMonth(direction) {
-      currentNavDate.setMonth(currentNavDate.getMonth() + direction);
-      renderCalendar();
-    }
-
-    function openBookingModal(dateStr, existingShift) {
-      selectedDateStr = dateStr;
-      document.getElementById("modal-date-title").innerText = `Дата: ${dateStr}`;
-
-      let primarySelect = document.getElementById("booking-primary");
-      let partnerSelect = document.getElementById("booking-partner");
-      primarySelect.innerHTML = "";
-      partnerSelect.innerHTML = `<option value="">-- Без напарника (один) --</option>`;
-
-      appData.fishermen.sort((a, b) => a.localeCompare(b, 'uk')).forEach(f => {
-        let opt1 = document.createElement("option");
-        opt1.value = f;
-        opt1.innerText = f;
-        primarySelect.appendChild(opt1);
-
-        let opt2 = document.createElement("option");
-        opt2.value = f;
-        opt2.innerText = f;
-        partnerSelect.appendChild(opt2);
-      });
-
-      if (currentUser && currentUser.role === 'admin') {
-        primarySelect.disabled = false;
-        if (appData.fishermen.length > 0) primarySelect.value = appData.fishermen[0];
-      } else {
-        primarySelect.value = currentUser ? currentUser.username : (appData.fishermen[0] || "");
-        primarySelect.disabled = false;
-      }
-
-      let infoText = document.getElementById("modal-date-info");
-      let actionsBlock = document.getElementById("booking-actions");
-      let selectGroup1 = document.getElementById("booking-select-group-1");
-      let selectGroup2 = document.getElementById("booking-select-group-2");
-      let existingAdminBtns = document.getElementById("modal-admin-actions");
-
-      if (existingAdminBtns) existingAdminBtns.remove();
-
-      if (existingShift && existingShift.guard1 && existingShift.guard1 !== "undefined") {
-        let guardsText = existingShift.guard2 ? `${existingShift.guard1} та ${existingShift.guard2}` : existingShift.guard1;
-        if (existingShift.status === 'confirmed') {
-          infoText.innerHTML = `Варта підтверджена:<br><b>${guardsText}</b>`;
-          selectGroup1.classList.add("hidden");
-          selectGroup2.classList.add("hidden");
-          actionsBlock.classList.add("hidden");
-        } else {
-          infoText.innerHTML = `Заявка від:<br><b>${guardsText}</b><br><span style="color: #f59e0b; font-weight: bold;">(Очікує підтвердження)</span>`;
-          selectGroup1.classList.add("hidden");
-          selectGroup2.classList.add("hidden");
-          actionsBlock.classList.add("hidden");
-
-          if (currentUser && currentUser.role === 'admin') {
-            let adminDiv = document.createElement("div");
-            adminDiv.id = "modal-admin-actions";
-            adminDiv.innerHTML = `
-              <button class="btn-green" style="margin-top: 8px;" onclick="confirmShift('${dateStr}')">Підтвердити</button>
-              <button class="btn-danger" style="margin-top: 4px;" onclick="rejectShift('${dateStr}')">Відхилити</button>
-            `;
-            actionsBlock.parentNode.insertBefore(adminDiv, actionsBlock);
-          }
-        }
-      } else {
-        infoText.innerHTML = "Оберіть учасників та призначте варту.";
-        selectGroup1.classList.remove("hidden");
-        selectGroup2.classList.remove("hidden");
-        actionsBlock.classList.remove("hidden");
-      }
-
-      document.getElementById("booking-modal").classList.remove("hidden");
-    }
-
-    function closeModal() {
-      document.getElementById("booking-modal").classList.add("hidden");
-    }
-
-    function submitBooking() {
-      let primary = document.getElementById("booking-primary").value;
-      let partner = document.getElementById("booking-partner").value;
-
-      if (!primary) {
-        alert("Оберіть першого рибалку!");
-        return;
-      }
-      if (partner && primary === partner) {
-        alert("Перший рибалка і напарник не можуть бути однією людиною!");
-        return;
-      }
-
-      appData.shifts = appData.shifts.filter(s => s.date !== selectedDateStr);
-      let statusVal = (currentUser && currentUser.role === 'admin') ? 'confirmed' : 'pending';
-
-      appData.shifts.push({
-        date: selectedDateStr,
-        guard1: primary,
-        guard2: partner || "",
-        status: statusVal
-      });
-
-      saveToCloud();
-      closeModal();
-      alert(currentUser && currentUser.role === 'admin' ? "Варту успішно призначено!" : "Бронювання надіслано на підтвердження!");
-    }
-
-    function renderFishermenList() {
-      const container = document.getElementById("fishermen-manage-list");
-      container.innerHTML = "";
-
-      if (appData.fishermen.length === 0) {
-        container.innerHTML = `<p style="text-align: center; color: var(--text-muted); font-size: 13px;">Список порожній</p>`;
-        return;
-      }
-
-      appData.fishermen.sort((a, b) => a.localeCompare(b, 'uk')).forEach((f, index) => {
-        let card = document.createElement("div");
-        card.className = "stats-card";
-
-        if (editingFishermanIndex === index) {
-          card.innerHTML = `
-            <div class="edit-name-group">
-              <input type="text" id="edit-fisherman-input" class="edit-name-input" value="${f}">
-              <button class="btn-green" style="width: auto; margin: 0; padding: 4px 8px; font-size: 12px;" onclick="saveEditedFisherman(${index})">Зберегти</button>
-              <button style="width: auto; margin: 0; padding: 4px 8px; font-size: 12px; background: #64748b;" onclick="cancelEditFisherman()">Скасувати</button>
-            </div>
-          `;
-        } else {
-          card.innerHTML = `
-            <span style="font-size: 13px;"><b>${f}</b></span>
-            <div style="display: flex; gap: 4px;">
-              <button class="btn-orange" style="width: auto; margin: 0; padding: 4px 8px; font-size: 12px;" onclick="startEditFisherman(${index})">Редагувати</button>
-              <button class="btn-danger" style="width: auto; margin: 0; padding: 4px 8px; font-size: 12px;" onclick="removeFisherman(${index})">Видалити</button>
-            </div>
-          `;
-        }
-        container.appendChild(card);
-      });
-    }
-
-    function startEditFisherman(index) {
-      editingFishermanIndex = index;
-      renderFishermenList();
-    }
-
-    function cancelEditFisherman() {
-      editingFishermanIndex = -1;
-      renderFishermenList();
-    }
-
-    function saveEditedFisherman(index) {
-      let editInput = document.getElementById("edit-fisherman-input");
-      let newName = editInput.value.trim();
-      let oldName = appData.fishermen[index];
-
-      if (!newName) {
-        alert("Ім'я не може бути порожнім!");
-        return;
-      }
-
-      if (newName !== oldName && appData.fishermen.includes(newName)) {
-        alert("Рибалка з таким ім'ям вже існує!");
-        return;
-      }
-
-      appData.fishermen[index] = newName;
-      appData.fishermen.sort((a, b) => a.localeCompare(b, 'uk'));
-
-      appData.shifts.forEach(shift => {
-        if (shift.guard1 === oldName) shift.guard1 = newName;
-        if (shift.guard2 === oldName) shift.guard2 = newName;
-      });
-
-      editingFishermanIndex = -1;  
-      saveToCloud();  
-      renderFishermenList();  
-      renderCalendar();
-      alert("Дані рибалки успішно змінено!");
-    }
-
-    function addFisherman() {
-      let nameInput = document.getElementById("new-fisherman-input");
-      let name = nameInput.value.trim();
-
-      if (!name) {
-        alert("Введіть ім'я рибалки!");
-        return;
-      }
-      if (appData.fishermen.includes(name)) {
-        alert("Такий рибалка вже є у списку!");
-        return;
-      }
-
-      appData.fishermen.push(name);
-      appData.fishermen.sort((a, b) => a.localeCompare(b, 'uk'));
-      nameInput.value = "";
-      saveToCloud();
-      renderFishermenList();
-      alert("Рибалку успішно додано!");
-    }
-
-    function removeFisherman(index) {
-      if (confirm("Ви дійсно хочете видалити цього рибалку?")) {
-        appData.fishermen.splice(index, 1);
-        saveToCloud();
-        renderFishermenList();
-      }
-    }
-
-    function clearCorruptedShifts() {
-      appData.shifts = appData.shifts.filter(s => s && s.date && s.guard1 && s.guard1 !== "undefined");
-      saveToCloud();
-      alert("Браковані/биті записи успішно видалено з бази!");
-      renderAll();
-    }
-
-    function renderStats() {
-      const container = document.getElementById("fishermen-stats-list");
-      container.innerHTML = "";
-
-      let counts = {};
-      appData.fishermen.forEach(f => counts[f] = 0);
-
-      appData.shifts.forEach(s => {
-        if (s.status === 'confirmed' && s.guard1 && s.guard1 !== "undefined") {
-          if (counts[s.guard1] !== undefined) counts[s.guard1]++;
-          if (s.guard2 && counts[s.guard2] !== undefined) counts[s.guard2]++;
-        }
-      });
-
-      appData.fishermen.sort((a, b) => a.localeCompare(b, 'uk')).forEach(f => {
-        let total = counts[f] || 0;
-        let card = document.createElement("div");
-        card.className = "stats-card";
-        let badgeHtml = total > 0 
-          ? `<span class="badge-count count-done">Вартостей: ${total}</span>`
-          : `<span class="badge-count count-none">Ще ні</span>`;
-        
-        card.innerHTML = `<span style="font-size: 13px;"><b>${f}</b></span>${badgeHtml}`;
-        container.appendChild(card);
-      });
-    }
-
-    function renderAdminRequests() {
-      const container = document.getElementById("admin-requests-list");
-      container.innerHTML = "";
-
-      let pendingShifts = appData.shifts.filter(s => s.status === 'pending' && s.guard1 && s.guard1 !== "undefined");
-
-      if (pendingShifts.length === 0) {
-        container.innerHTML = `<p style="text-align: center; color: var(--text-muted); margin-top: 15px; font-size: 13px;">Немає нових заявок</p>`;
-        return;
-      }
-
-      pendingShifts.forEach(shift => {
-        let card = document.createElement("div");
-        card.className = "stats-card";
-        card.style.flexDirection = "column";
-        card.style.alignItems = "flex-start";
-        card.style.gap = "6px";
-        let guardsText = shift.guard2 ? `${shift.guard1} та ${shift.guard2}` : `${shift.guard1} (один)`;
-        
-        card.innerHTML = `
-          <div style="font-size: 13px;">Дата: <b>${shift.date}</b></div>
-          <div style="font-size: 13px;">Хто заступає: <b>${guardsText}</b></div>
-          <div style="display: flex; gap: 8px; width: 100%; margin-top: 4px;">
-            <button class="btn-green" style="margin:0; padding: 8px; font-size: 13px;" onclick="confirmShift('${shift.date}')">Підтвердити</button>
-            <button class="btn-danger" style="margin:0; padding: 8px; font-size: 13px;" onclick="rejectShift('${shift.date}')">Відхилити</button>
-          </div>
-        `;
-        container.appendChild(card);
-      });
-    }
-
-    function confirmShift(dateStr) {
-      let shift = appData.shifts.find(s => s.date === dateStr);
-      if (shift) {
-        shift.status = 'confirmed';
-        saveToCloud();
-        closeModal();
-        alert("Варту успішно підтверджено!");
-      }
-    }
-
-    function rejectShift(dateStr) {
-      appData.shifts = appData.shifts.filter(s => s.date !== dateStr);
-      saveToCloud();
-      closeModal();
-      alert("Заявку відхилено / варту скасовано.");
-    }
-
-    function renderAll() {
-      renderCalendar();
-      if (!document.getElementById("tab-stats").classList.contains("hidden")) renderStats();
-      if (!document.getElementById("tab-admin").classList.contains("hidden")) renderAdminRequests();
-      if (!document.getElementById("tab-settings").classList.contains("hidden")) renderFishermenList();
-    }
-  </script>
-</body>
-</html>
+    // Завантаження збережених даних з локального сховища браузера
+    function loadLocalData() {
+      const localDataStr = localStorage.getItem("torchin_app_data");
+      if (localData
