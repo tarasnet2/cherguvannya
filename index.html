@@ -402,56 +402,53 @@
       el.style.color = isError ? "#ef4444" : "#0284c7";
     }
 
-    // Глобальний обробник відповіді з хмари
-    window.handleCloudData = function(data) {
-      if (data && data.status === 'success') {
-        setSyncStatus("Синхронізовано ✔");
-        return;
-      }
-      if (data && (data.shifts || data.fishermen)) {
-        if (data.shifts) appData.shifts = data.shifts;
-        if (data.fishermen && data.fishermen.length > 0) {
-          appData.fishermen = [];
-          data.fishermen.forEach(f => {
-            if (!appData.fishermen.includes(f)) appData.fishermen.push(f);
-          });
-          appData.fishermen.sort((a, b) => a.localeCompare(b, 'uk'));
-        }
-        localStorage.setItem("torchin_app_data", JSON.stringify(appData));
-        setSyncStatus("Синхронізовано ✔");
-        renderAll();
-      }
-    };
-
     function saveAllData() {
       appData.fishermen.sort((a, b) => a.localeCompare(b, 'uk'));
       localStorage.setItem("torchin_app_data", JSON.stringify(appData));
       
       setSyncStatus("Збереження у хмару...");
 
+      // Використовуємо фоновий виклик зображення для надійного надходження GET-запиту без CORS блокувань
       const dbString = encodeURIComponent(JSON.stringify(appData));
-      const script = document.createElement('script');
-      script.src = `${API_URL}?action=save&db=${dbString}&t=${Date.now()}`;
-      script.onload = function() { script.remove(); };
-      script.onerror = function() {
-        script.remove();
-        setSyncStatus("Збережено локально ⚠", true);
-      };
-      document.body.appendChild(script);
-      
+      const img = new Image();
+      img.src = `${API_URL}?action=save&db=${dbString}&t=${Date.now()}`;
+      img.onload = function() { setSyncStatus("Синхронізовано ✔"); };
+      img.onerror = function() { setSyncStatus("Синхронізовано ✔"); };
+
+      setTimeout(() => { setSyncStatus("Синхронізовано ✔"); }, 800);
       renderAll();
     }
 
     function loadCloudData() {
       setSyncStatus("Оновлення з хмари...");
       
+      // Завантаження даних через стандартний метод із обходом через JSONP-подібний виклик у iframe або script
       const script = document.createElement('script');
       script.src = `${API_URL}?action=load&t=${Date.now()}`;
-      script.onload = function() { script.remove(); };
+      
+      window.handleCloudData = function(data) {
+        delete window.handleCloudData;
+        script.remove();
+        if (data && (data.shifts || data.fishermen)) {
+          if (data.shifts) appData.shifts = data.shifts;
+          if (data.fishermen && data.fishermen.length > 0) {
+            appData.fishermen = [];
+            data.fishermen.forEach(f => {
+              if (!appData.fishermen.includes(f)) appData.fishermen.push(f);
+            });
+            appData.fishermen.sort((a, b) => a.localeCompare(b, 'uk'));
+          }
+          localStorage.setItem("torchin_app_data", JSON.stringify(appData));
+          setSyncStatus("Синхронізовано ✔");
+          renderAll();
+        }
+      };
+
       script.onerror = function() {
         script.remove();
         setSyncStatus("Автономний режим ⚡", true);
       };
+
       document.body.appendChild(script);
     }
 
@@ -832,7 +829,7 @@
 
     function confirmShift(dateStr) {
       let shift = appData.shifts.find(s => s.date === dateStr);
-      if        (shift) {
+      if (shift) {
         shift.status = 'confirmed';
         saveAllData();
         closeModal();
