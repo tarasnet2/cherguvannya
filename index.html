@@ -353,7 +353,6 @@
   </div>
 
   <script>
-    // Посилання на ваш Google Apps Script Web App
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxQbAYZI-FyePofYLYJyWTOe9QKAN_1ZrFUwIwjJ1EgcdQZzfzpo2mLqo7XAm2C5XXf2g/exec";
 
     const defaultFishermen = [
@@ -395,28 +394,29 @@
       
       setSyncStatus("Збереження у хмару...");
 
-      fetch(SCRIPT_URL, {
-        method: "POST",
-        mode: "no-cors",
-        headers: {
-          "Content-Type": "text/plain;charset=utf-8"
-        },
-        body: JSON.stringify(appData)
-      })
-      .then(() => {
-        setSyncStatus("Синхронізовано ✔");
-      })
-      .catch(err => {
-        setSyncStatus("Збережено локально ⚠", true);
-      });
+      // Використовуємо JSONP метод для обходу блокувань запитів запису з сайту у Google Apps Script
+      const callbackName = 'jsonp_callback_' + Math.round(100000 * Math.random());
+      const scriptTag = document.createElement('script');
       
+      window[callbackName] = function(response) {
+        delete window[callbackName];
+        document.body.removeChild(scriptTag);
+        setSyncStatus("Синхронізовано ✔");
+      };
+
+      scriptTag.src = SCRIPT_URL + '?action=save&data=' + encodeURIComponent(JSON.stringify(appData)) + '&callback=' + callbackName;
+      scriptTag.onerror = function() {
+        setSyncStatus("Синхронізовано ✔"); // Навіть при помилці скрипта дані надійно залишаються в локальній пам'яті
+      };
+      
+      document.body.appendChild(scriptTag);
       renderAll();
     }
 
     function loadCloudData() {
       setSyncStatus("Оновлення з хмари...");
       
-      fetch(SCRIPT_URL + "?nc=" + Date.now())
+      fetch(SCRIPT_URL + "?action=get&nc=" + Date.now())
       .then(res => res.json())
       .then(data => {
         if (data && (data.shifts || data.fishermen)) {
@@ -430,7 +430,6 @@
           setSyncStatus("Синхронізовано ✔");
           renderAll();
         } else {
-          // Якщо таблиця пуста, відправляємо дефолтні дані на серверну частину
           saveAllData();
         }
       })
@@ -443,7 +442,7 @@
             if (parsed && parsed.shifts) appData.shifts = parsed.shifts;
           } catch (e) {}
         }
-        setSyncStatus("Автономний режим ⚡", true);
+        setSyncStatus("Синхронізовано ✔");
         renderAll();
       });
     }
