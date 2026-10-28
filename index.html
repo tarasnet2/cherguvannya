@@ -237,13 +237,12 @@ button:active {
 <body>
 
 <div class="container">
-    <h2>Водойма Торчин</h2>
+    <h2>Чергування Водойми Торчин</h2>
 
-    <!-- БЛОК АВТОРИЗАЦІЇ (РОЗДІЛЕНИЙ ДЛЯ РИБАЛОК ТА АДМІНІСТРАТОРА) -->
+    <!-- БЛОК АВТОРИЗАЦІЇ -->
     <div id="login-section">
         <div id="login-error" class="alert hidden">Помилка входу</div>
         
-        <!-- Вхід для рибалок (Вільний вхід зі списку) -->
         <div style="background: #f8fafc; padding: 12px; border-radius: 8px; border: 1px solid var(--border); margin-bottom: 15px;">
             <h4 style="margin-top: 0; color: var(--accent);">Вхід для рибалок (Вільний вибір)</h4>
             <div class="form-group">
@@ -257,7 +256,6 @@ button:active {
 
         <div style="text-align: center; color: var(--text-muted); font-size: 13px; margin: 10px 0;">— АБО АДМІНІСТРАТОР —</div>
 
-        <!-- Вхід для адміністратора -->
         <div style="background: #f8fafc; padding: 12px; border-radius: 8px; border: 1px solid var(--border);">
             <h4 style="margin-top: 0; color: var(--danger);">Вхід для Адміна</h4>
             <div class="form-group" style="margin-bottom: 8px;">
@@ -277,7 +275,7 @@ button:active {
         <!-- Меню вкладок -->
         <div class="nav-tabs">
             <div class="nav-tab active" onclick="switchTab('calendar', event)">Календар</div>
-            <div class="nav-tab" onclick="switchTab('stats', event)">Вартував</div>
+            <div class="nav-tab" onclick="switchTab('stats', event)">Чергував</div>
             <div id="admin-tab-btn" class="nav-tab hidden" onclick="switchTab('admin', event)">Заявки (<span id="pending-count">0</span>)</div>
             <div id="settings-tab-btn" class="nav-tab hidden" onclick="switchTab('settings', event)">Рибалки</div>
         </div>
@@ -300,20 +298,20 @@ button:active {
             </div>
             <div class="calendar-grid" id="calendar-days-container" style="margin-top: 5px;"></div>
             <p style="font-size: 12px; color: var(--text-muted); text-align: center; margin-top: 12px;">
-                Натисніть на день, щоб призначити або забронювати варту.
+                Натисніть на день, щоб призначити або забронювати чергування.
             </p>
         </div>
 
         <!-- ВКЛАДКА 2: СТАТИСТИКА -->
         <div id="tab-stats" class="tab-content hidden">
-            <h3>Облік варти рибалок</h3>
-            <p style="font-size: 12px; color: var(--text-muted); text-align: center;">Кількість виходів на охорону</p>
+            <h3>Облік чергувань рибалок</h3>
+            <p style="font-size: 12px; color: var(--text-muted); text-align: center;">Кількість фактичних виходів на чергування</p>
             <div id="fishermen-stats-list" style="max-height: 380px; overflow-y: auto; padding-right: 3px; margin-top: 10px;"></div>
         </div>
 
         <!-- ВКЛАДКА 3: АДМІНІСТРУВАННЯ ЗАЯВОК -->
         <div id="tab-admin" class="tab-content hidden">
-            <h3>Підтвердження бронювань</h3>
+            <h3>Підтвердження та облік чергувань</h3>
             <div style="margin-bottom: 15px; text-align: right;">
                 <button class="btn-danger" style="width: auto; padding: 6px 12px; font-size: 12px;" onclick="clearCorruptedShifts()">Очистити биті записи</button>
             </div>
@@ -358,7 +356,6 @@ button:active {
 </div>
 
 <script>
-// Ваше робоче посилання на хмару
 const API_URL = "https://script.google.com/macros/s/AKfycbxQbAYZI-FyePofYLYJyWTOe9QKAN_1ZrFUwIwjJ1EgcdQZzfzpo2mLqo7XAm2C5XXf2g/exec";
 
 let appData = {
@@ -382,12 +379,10 @@ let currentUser = null;
 let currentNavDate = new Date();
 let selectedDateStr = null;
 
-// Функція сортування списку рибалок за алфавітом (українська локаль)
 function sortFishermen() {
     appData.fishermen.sort((a, b) => a.localeCompare(b, 'uk'));
 }
 
-// Завантаження даних при старті сторінки для заповнення випадаючого списку на вході
 window.onload = function() {
     loadInitialDataForLogin();
 };
@@ -402,7 +397,6 @@ function loadInitialDataForLogin() {
             sortFishermen();
             if (data && data.shifts) appData.shifts = data.shifts;
             
-            // Заповнюємо випадаючий список на формі входу
             let loginSelect = document.getElementById("select-fisherman-login");
             loginSelect.innerHTML = '<option value="">-- Оберіть зі списку --</option>';
             appData.fishermen.forEach(f => {
@@ -473,7 +467,7 @@ function handleLogout() {
     document.getElementById("app-section").classList.add("hidden");
     document.getElementById("login-section").classList.remove("hidden");
     document.getElementById("admin-password").value = "";
-    loadInitialDataForLogin(); // Оновлюємо список на випадок змін
+    loadInitialDataForLogin();
 }
 
 function loadAppData() {
@@ -490,7 +484,7 @@ function loadAppData() {
             renderAll();
         })
         .catch(err => {
-            console.log("Помилка завантаження, використовую поточні дані:", err);
+            console.log("Помилка завантаження:", err);
             sortFishermen();
             renderAll();
         });
@@ -564,7 +558,7 @@ function renderCalendar() {
         if (shift && shift.guard1 && shift.guard1 !== "undefined") {
             let displayGuards = shift.guard2 ? `${shift.guard1}<br>${shift.guard2}` : `${shift.guard1}`;
             if (shift.status === 'confirmed') {
-                htmlContent += `<div class="shift-badge badge-confirmed" title="Сторожують: ${shift.guard1}">${displayGuards}</div>`;
+                htmlContent += `<div class="shift-badge badge-confirmed" title="Чергують: ${shift.guard1}">${displayGuards}</div>`;
             } else {
                 htmlContent += `<div class="shift-badge badge-pending" title="Очікує підтвердження">${displayGuards}</div>`;
             }
@@ -612,7 +606,7 @@ function openBookingModal(dateStr, existingShift) {
         if (appData.fishermen.length > 0) primarySelect.value = appData.fishermen[0];
     } else {
         primarySelect.value = currentUser ? currentUser.username : (appData.fishermen[0] || "");
-        primarySelect.disabled = false; // Звичайний рибалка теж може обрати дату або змінити за потреби
+        primarySelect.disabled = false;
     }
     
     let infoText = document.getElementById("modal-date-info");
@@ -626,14 +620,14 @@ function openBookingModal(dateStr, existingShift) {
     if (existingShift && existingShift.guard1 && existingShift.guard1 !== "undefined") {
         let guardsText = existingShift.guard2 ? `${existingShift.guard1} та ${existingShift.guard2}` : `${existingShift.guard1}`;
         if (existingShift.status === 'confirmed') {
-            infoText.innerHTML = `Варта підтверджена:<br><b>${guardsText}</b>`;
+            infoText.innerHTML = `Чергування підтверджено:<br><b>${guardsText}</b>`;
             selectGroup1.classList.add("hidden");
             selectGroup2.classList.add("hidden");
             actionsBlock.classList.add("hidden");
             if (currentUser && currentUser.role === 'admin') {
                 let adminDiv = document.createElement("div");
                 adminDiv.id = "modal-admin-actions";
-                adminDiv.innerHTML = `<button class="btn-danger" style="margin-top: 8px;" onclick="rejectShift('${dateStr}')">Скасувати варту</button>`;
+                adminDiv.innerHTML = `<button class="btn-danger" style="margin-top: 8px;" onclick="rejectShift('${dateStr}')">Скасувати чергування</button>`;
                 actionsBlock.parentNode.insertBefore(adminDiv, actionsBlock);
             }
         } else {
@@ -652,7 +646,7 @@ function openBookingModal(dateStr, existingShift) {
             }
         }
     } else {
-        infoText.innerHTML = "Оберіть учасників та призначте варту.";
+        infoText.innerHTML = "Оберіть учасників та забронюйте чергування.";
         selectGroup1.classList.remove("hidden");
         selectGroup2.classList.remove("hidden");
         actionsBlock.classList.remove("hidden");
@@ -685,12 +679,14 @@ function submitBooking() {
         date: selectedDateStr,
         guard1: primary,
         guard2: partner || "",
-        status: statusVal
+        status: statusVal,
+        attended1: false, // Відмітка присутності для першого
+        attended2: false  // Відмітка присутності для другого (якщо є)
     });
     
     saveToCloud();
     closeModal();
-    alert(currentUser && currentUser.role === 'admin' ? "Варту успішно призначено!" : "Бронювання надіслано на підтвердження адміну!");
+    alert(currentUser && currentUser.role === 'admin' ? "Чергування успішно призначено!" : "Заявку на чергування надіслано адміну!");
 }
 
 function renderFishermenList() {
@@ -752,18 +748,25 @@ function renderStats() {
     let counts = {};
     sortFishermen();
     appData.fishermen.forEach(f => counts[f] = 0);
+    
+    // Рахуємо лише ті чергування, де адмін відмітив присутність (attended = true)
     appData.shifts.forEach(s => {
-        if (s.status === 'confirmed' && s.guard1 && s.guard1 !== "undefined") {
-            if (counts[s.guard1] !== undefined) counts[s.guard1]++;
-            if (s.guard2 && counts[s.guard2] !== undefined) counts[s.guard2]++;
+        if (s.status === 'confirmed') {
+            if (s.guard1 && s.guard1 !== "undefined" && s.attended1) {
+                if (counts[s.guard1] !== undefined) counts[s.guard1]++;
+            }
+            if (s.guard2 && s.guard2 !== "undefined" && s.attended2) {
+                if (counts[s.guard2] !== undefined) counts[s.guard2]++;
+            }
         }
     });
+
     appData.fishermen.forEach(f => {
         let total = counts[f] || 0;
         let card = document.createElement("div");
         card.className = "stats-card";
         let badgeHtml = total > 0 
-            ? `<span class="badge-count count-done">Вартостей: ${total}</span>` 
+            ? `<span class="badge-count count-done">Чергувань: ${total}</span>` 
             : `<span class="badge-count count-none">Ще ні</span>`;
         card.innerHTML = `<span style="font-size: 13px;"><b>${f}</b></span>${badgeHtml}`;
         container.appendChild(card);
@@ -773,28 +776,69 @@ function renderStats() {
 function renderAdminRequests() {
     const container = document.getElementById("admin-requests-list");
     container.innerHTML = "";
-    let pendingShifts = appData.shifts.filter(s => s.status === 'pending' && s.guard1 && s.guard1 !== "undefined");
-    if (pendingShifts.length === 0) {
-        container.innerHTML = `<p style="text-align: center; color: var(--text-muted); margin-top: 15px; font-size: 13px;">Немає нових заяв на підтвердження</p>`;
+    
+    if (appData.shifts.length === 0) {
+        container.innerHTML = `<p style="text-align: center; color: var(--text-muted); margin-top: 15px; font-size: 13px;">Немає записів чергувань</p>`;
         return;
     }
-    pendingShifts.forEach(shift => {
+
+    // Показуємо і заявки на підтвердження, і вже підтверджені чергування для відмітки присутності
+    appData.shifts.forEach(shift => {
+        if (!shift || !shift.date || !shift.guard1 || shift.guard1 === "undefined") return;
+
         let card = document.createElement("div");
         card.className = "stats-card";
         card.style.flexDirection = "column";
         card.style.alignItems = "flex-start";
         card.style.gap = "6px";
+        
         let guardsText = shift.guard2 ? `${shift.guard1} та ${shift.guard2}` : `${shift.guard1} (один)`;
-        card.innerHTML = `
-            <div style="font-size: 13px;">Дата: <b>${shift.date}</b></div>
-            <div style="font-size: 13px;">Хто заступає: <b>${guardsText}</b></div>
-            <div style="display: flex; gap: 8px; width: 100%; margin-top: 4px;">
-                <button class="btn-green" style="margin:0; padding: 8px; font-size: 13px;" onclick="confirmShift('${shift.date}')">Підтвердити</button>
-                <button class="btn-danger" style="margin:0; padding: 8px; font-size: 13px;" onclick="rejectShift('${shift.date}')">Відхилити</button>
-            </div>
-        `;
+        
+        if (shift.status === 'pending') {
+            card.innerHTML = `
+                <div style="font-size: 13px;">Дата: <b>${shift.date}</b> <span style="color: #f59e0b;">(Очікує підтвердження)</span></div>
+                <div style="font-size: 13px;">Хто заступає: <b>${guardsText}</b></div>
+                <div style="display: flex; gap: 8px; width: 100%; margin-top: 4px;">
+                    <button class="btn-green" style="margin:0; padding: 8px; font-size: 13px;" onclick="confirmShift('${shift.date}')">Підтвердити</button>
+                    <button class="btn-danger" style="margin:0; padding: 8px; font-size: 13px;" onclick="rejectShift('${shift.date}')">Відхилити</button>
+                </div>
+            `;
+        } else {
+            // Підтверджена варта: адмін може відмічати галочками чи були рибалки присутні
+            let att1Checked = shift.attended1 ? "checked" : "";
+            let att2Checked = shift.attended2 ? "checked" : "";
+            
+            let checkboxesHtml = `<label style="font-size: 12px; margin-top: 4px; display: flex; align-items: center; gap: 6px; cursor: pointer;">
+                <input type="checkbox" style="width: auto; margin: 0;" ${att1Checked} onchange="toggleAttendance('${shift.date}', '1', this.checked)"> Присутній: <b>${shift.guard1}</b>
+            </label>`;
+            
+            if (shift.guard2) {
+                checkboxesHtml += `<label style="font-size: 12px; margin-top: 2px; display: flex; align-items: center; gap: 6px; cursor: pointer;">
+                    <input type="checkbox" style="width: auto; margin: 0;" ${att2Checked} onchange="toggleAttendance('${shift.date}', '2', this.checked)"> Присутній: <b>${shift.guard2}</b>
+                </label>`;
+            }
+
+            card.innerHTML = `
+                <div style="font-size: 13px;">Дата: <b>${shift.date}</b> <span style="color: #10b981;">(Підтверджено)</span></div>
+                <div style="font-size: 13px;">Чергують: <b>${guardsText}</b></div>
+                <div style="width: 100%; background: #f1f5f9; padding: 8px; border-radius: 6px; margin-top: 4px;">
+                    <div style="font-size: 12px; font-weight: bold; margin-bottom: 2px; color: var(--text-muted);">Відмітка фактичного чергування:</div>
+                    ${checkboxesHtml}
+                </div>
+                <button class="btn-danger" style="margin: 6px 0 0 0; padding: 6px; font-size: 12px; width: auto;" onclick="rejectShift('${shift.date}')">Скасувати чергування</button>
+            `;
+        }
         container.appendChild(card);
     });
+}
+
+function toggleAttendance(dateStr, guardNum, isChecked) {
+    let shift = appData.shifts.find(s => s.date === dateStr);
+    if (shift) {
+        if (guardNum === '1') shift.attended1 = isChecked;
+        if (guardNum === '2') shift.attended2 = isChecked;
+        saveToCloud();
+    }
 }
 
 function confirmShift(dateStr) {
@@ -802,16 +846,14 @@ function confirmShift(dateStr) {
     if (shift) {
         shift.status = 'confirmed';
         saveToCloud();
-        closeModal();
-        alert("Варту успішно підтверджено!");
+        alert("Чергування успішно підтверджено!");
     }
 }
 
 function rejectShift(dateStr) {
     appData.shifts = appData.shifts.filter(s => s.date !== dateStr);
     saveToCloud();
-    closeModal();
-    alert("Заявку відхилено / варту скасовано.");
+    alert("Заявку відхилено / чергування скасовано.");
 }
 
 function renderAll() {
