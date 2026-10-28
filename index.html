@@ -309,7 +309,7 @@ button:active {
             <div id="fishermen-stats-list" style="max-height: 380px; overflow-y: auto; padding-right: 3px; margin-top: 10px;"></div>
         </div>
 
-        <!-- ВКЛАДКА 3: АДМІНІСТРУВАННЯ ЗАЯВОК -->
+        <!-- ВКЛАДКА 3: АДМІНІСТРУВАННЯ ЗАЯВОК ТА ПРИСУТНОСТІ -->
         <div id="tab-admin" class="tab-content hidden">
             <h3>Підтвердження та облік чергувань</h3>
             <div style="margin-bottom: 15px; text-align: right;">
@@ -407,7 +407,7 @@ function loadInitialDataForLogin() {
             });
         })
         .catch(err => {
-            console.log("Помилка попереднього завантаження:", err);
+            console.log("Помилка завантаження:", err);
             sortFishermen();
             let loginSelect = document.getElementById("select-fisherman-login");
             loginSelect.innerHTML = '<option value="">-- Оберіть зі списку --</option>';
@@ -680,8 +680,8 @@ function submitBooking() {
         guard1: primary,
         guard2: partner || "",
         status: statusVal,
-        attended1: false, // Відмітка присутності для першого
-        attended2: false  // Відмітка присутності для другого (якщо є)
+        attended1: (statusVal === 'confirmed'), // За замовчуванням адмін при створенні вважає присутнім
+        attended2: (statusVal === 'confirmed')
     });
     
     saveToCloud();
@@ -749,13 +749,12 @@ function renderStats() {
     sortFishermen();
     appData.fishermen.forEach(f => counts[f] = 0);
     
-    // Рахуємо лише ті чергування, де адмін відмітив присутність (attended = true)
     appData.shifts.forEach(s => {
         if (s.status === 'confirmed') {
-            if (s.guard1 && s.guard1 !== "undefined" && s.attended1) {
+            if (s.guard1 && s.guard1 !== "undefined" && (s.attended1 === true || s.attended1 === undefined)) {
                 if (counts[s.guard1] !== undefined) counts[s.guard1]++;
             }
-            if (s.guard2 && s.guard2 !== "undefined" && s.attended2) {
+            if (s.guard2 && s.guard2 !== "undefined" && (s.attended2 === true || s.attended2 === undefined)) {
                 if (counts[s.guard2] !== undefined) counts[s.guard2]++;
             }
         }
@@ -777,59 +776,85 @@ function renderAdminRequests() {
     const container = document.getElementById("admin-requests-list");
     container.innerHTML = "";
     
-    if (appData.shifts.length === 0) {
-        container.innerHTML = `<p style="text-align: center; color: var(--text-muted); margin-top: 15px; font-size: 13px;">Немає записів чергувань</p>`;
+    let pendingShifts = appData.shifts.filter(s => s.status === 'pending' && s.guard1 && s.guard1 !== "undefined");
+    let confirmedShifts = appData.shifts.filter(s => s.status === 'confirmed' && s.guard1 && s.guard1 !== "undefined");
+
+    if (pendingShifts.length === 0 && confirmedShifts.length === 0) {
+        container.innerHTML = `<p style="text-align: center; color: var(--text-muted); margin-top: 15px; font-size: 13px;">Немає нових заяв чи записів чергувань</p>`;
         return;
     }
 
-    // Показуємо і заявки на підтвердження, і вже підтверджені чергування для відмітки присутності
-    appData.shifts.forEach(shift => {
-        if (!shift || !shift.date || !shift.guard1 || shift.guard1 === "undefined") return;
+    // БЛОК 1: Заявки, що очікують підтвердження
+    if (pendingShifts.length > 0) {
+        let pendingTitle = document.createElement("h4");
+        pendingTitle.style.color = "var(--accent-orange)";
+        pendingTitle.style.textAlign = "left";
+        pendingTitle.innerText = "Очікують підтвердження:";
+        container.appendChild(pendingTitle);
 
-        let card = document.createElement("div");
-        card.className = "stats-card";
-        card.style.flexDirection = "column";
-        card.style.alignItems = "flex-start";
-        card.style.gap = "6px";
-        
-        let guardsText = shift.guard2 ? `${shift.guard1} та ${shift.guard2}` : `${shift.guard1} (один)`;
-        
-        if (shift.status === 'pending') {
+        pendingShifts.forEach(shift => {
+            let card = document.createElement("div");
+            card.className = "stats-card";
+            card.style.flexDirection = "column";
+            card.style.alignItems = "flex-start";
+            card.style.gap = "6px";
+            let guardsText = shift.guard2 ? `${shift.guard1} та ${shift.guard2}` : `${shift.guard1} (один)`;
             card.innerHTML = `
-                <div style="font-size: 13px;">Дата: <b>${shift.date}</b> <span style="color: #f59e0b;">(Очікує підтвердження)</span></div>
+                <div style="font-size: 13px;">Дата: <b>${shift.date}</b></div>
                 <div style="font-size: 13px;">Хто заступає: <b>${guardsText}</b></div>
                 <div style="display: flex; gap: 8px; width: 100%; margin-top: 4px;">
                     <button class="btn-green" style="margin:0; padding: 8px; font-size: 13px;" onclick="confirmShift('${shift.date}')">Підтвердити</button>
                     <button class="btn-danger" style="margin:0; padding: 8px; font-size: 13px;" onclick="rejectShift('${shift.date}')">Відхилити</button>
                 </div>
             `;
-        } else {
-            // Підтверджена варта: адмін може відмічати галочками чи були рибалки присутні
-            let att1Checked = shift.attended1 ? "checked" : "";
-            let att2Checked = shift.attended2 ? "checked" : "";
-            
-            let checkboxesHtml = `<label style="font-size: 12px; margin-top: 4px; display: flex; align-items: center; gap: 6px; cursor: pointer;">
-                <input type="checkbox" style="width: auto; margin: 0;" ${att1Checked} onchange="toggleAttendance('${shift.date}', '1', this.checked)"> Присутній: <b>${shift.guard1}</b>
+            container.appendChild(card);
+        });
+    }
+
+    // БЛОК 2: Підтверджені чергування з галочками присутності
+    if (confirmedShifts.length > 0) {
+        let confirmedTitle = document.createElement("h4");
+        confirmedTitle.style.color = "var(--accent-green)";
+        confirmedTitle.style.textAlign = "left";
+        confirmedTitle.style.marginTop = "15px";
+        confirmedTitle.innerText = "Підтверджені чергування (Відмітка присутності):";
+        container.appendChild(confirmedTitle);
+
+        // Сортуємо за датою (від найновіших)
+        confirmedShifts.sort((a, b) => b.date.localeCompare(a.date));
+
+        confirmedShifts.forEach(shift => {
+            let card = document.createElement("div");
+            card.className = "stats-card";
+            card.style.flexDirection = "column";
+            card.style.alignItems = "flex-start";
+            card.style.gap = "6px";
+
+            let att1Checked = (shift.attended1 !== false) ? "checked" : "";
+            let att2Checked = (shift.attended2 !== false) ? "checked" : "";
+
+            let checkboxesHtml = `<label style="font-size: 13px; margin-top: 4px; display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                <input type="checkbox" style="width: 18px; height: 18px; margin: 0;" ${att1Checked} onchange="toggleAttendance('${shift.date}', '1', this.checked)"> Чергував: <b>${shift.guard1}</b>
             </label>`;
-            
+
             if (shift.guard2) {
-                checkboxesHtml += `<label style="font-size: 12px; margin-top: 2px; display: flex; align-items: center; gap: 6px; cursor: pointer;">
-                    <input type="checkbox" style="width: auto; margin: 0;" ${att2Checked} onchange="toggleAttendance('${shift.date}', '2', this.checked)"> Присутній: <b>${shift.guard2}</b>
+                checkboxesHtml += `<label style="font-size: 13px; margin-top: 6px; display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                    <input type="checkbox" style="width: 18px; height: 18px; margin: 0;" ${att2Checked} onchange="toggleAttendance('${shift.date}', '2', this.checked)"> Чергував: <b>${shift.guard2}</b>
                 </label>`;
             }
 
             card.innerHTML = `
-                <div style="font-size: 13px;">Дата: <b>${shift.date}</b> <span style="color: #10b981;">(Підтверджено)</span></div>
-                <div style="font-size: 13px;">Чергують: <b>${guardsText}</b></div>
-                <div style="width: 100%; background: #f1f5f9; padding: 8px; border-radius: 6px; margin-top: 4px;">
-                    <div style="font-size: 12px; font-weight: bold; margin-bottom: 2px; color: var(--text-muted);">Відмітка фактичного чергування:</div>
+                <div style="font-size: 13px; width:100%; display:flex; justify-content:space-between; align-items:center;">
+                    <span>Дата: <b>${shift.date}</b></span>
+                    <button class="btn-danger" style="width: auto; margin: 0; padding: 3px 8px; font-size: 11px;" onclick="rejectShift('${shift.date}')">Скасувати</button>
+                </div>
+                <div style="width: 100%; background: #ffffff; padding: 8px; border-radius: 6px; border: 1px solid var(--border); box-sizing: border-box; margin-top: 2px;">
                     ${checkboxesHtml}
                 </div>
-                <button class="btn-danger" style="margin: 6px 0 0 0; padding: 6px; font-size: 12px; width: auto;" onclick="rejectShift('${shift.date}')">Скасувати чергування</button>
             `;
-        }
-        container.appendChild(card);
-    });
+            container.appendChild(card);
+        });
+    }
 }
 
 function toggleAttendance(dateStr, guardNum, isChecked) {
@@ -845,15 +870,18 @@ function confirmShift(dateStr) {
     let shift = appData.shifts.find(s => s.date === dateStr);
     if (shift) {
         shift.status = 'confirmed';
+        shift.attended1 = true;
+        shift.attended2 = true;
         saveToCloud();
-        alert("Чергування успішно підтверджено!");
+        alert("Чергування підтверджено!");
     }
 }
 
 function rejectShift(dateStr) {
-    appData.shifts = appData.shifts.filter(s => s.date !== dateStr);
-    saveToCloud();
-    alert("Заявку відхилено / чергування скасовано.");
+    if (confirm("Ви дійсно хочете скасувати / видалити це чергування?")) {
+        appData.shifts = appData.shifts.filter(s => s.date !== dateStr);
+        saveToCloud();
+    }
 }
 
 function renderAll() {
