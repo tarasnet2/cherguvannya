@@ -239,18 +239,32 @@ button:active {
 <div class="container">
     <h2>Водойма Торчин</h2>
 
-    <!-- БЛОК АВТОРИЗАЦІЇ -->
+    <!-- БЛОК АВТОРИЗАЦІЇ (РОЗДІЛЕНИЙ ДЛЯ РИБАЛОК ТА АДМІНІСТРАТОРА) -->
     <div id="login-section">
-        <div id="login-error" class="alert hidden">Невірний логін або пароль</div>
-        <div class="form-group">
-            <label for="username">Логін (Ваше Прізвище та Ім'я або admin):</label>
-            <input type="text" id="username" placeholder="Наприклад: Улітовський Тарас">
+        <div id="login-error" class="alert hidden">Помилка входу</div>
+        
+        <!-- Вхід для рибалок (Вільний вхід зі списку) -->
+        <div style="background: #f8fafc; padding: 12px; border-radius: 8px; border: 1px solid var(--border); margin-bottom: 15px;">
+            <h4 style="margin-top: 0; color: var(--accent);">Вхід для рибалок (Вільний вибір)</h4>
+            <div class="form-group">
+                <label for="select-fisherman-login">Оберіть своє Прізвище та Ім'я:</label>
+                <select id="select-fisherman-login">
+                    <option value="">-- Оберіть зі списку --</option>
+                </select>
+            </div>
+            <button class="btn-green" onclick="handleFishermanLogin()">Увійти як Рибалка</button>
         </div>
-        <div class="form-group">
-            <label for="password">Пароль:</label>
-            <input type="password" id="password" placeholder="Введіть пароль">
+
+        <div style="text-align: center; color: var(--text-muted); font-size: 13px; margin: 10px 0;">— АБО АДМІНІСТРАТОР —</div>
+
+        <!-- Вхід для адміністратора -->
+        <div style="background: #f8fafc; padding: 12px; border-radius: 8px; border: 1px solid var(--border);">
+            <h4 style="margin-top: 0; color: var(--danger);">Вхід для Адміна</h4>
+            <div class="form-group" style="margin-bottom: 8px;">
+                <input type="password" id="admin-password" placeholder="Введіть пароль адміністратора">
+            </div>
+            <button class="btn-danger" onclick="handleAdminLogin()">Увійти як Адмін</button>
         </div>
-        <button onclick="handleLogin()">Увійти в систему</button>
     </div>
 
     <!-- ОСНОВНИЙ ІНТЕРФЕЙС -->
@@ -308,7 +322,7 @@ button:active {
 
         <!-- ВКЛАДКА 4: КЕРУВАННЯ СПИСКОМ РИБАЛОК -->
         <div id="tab-settings" class="tab-content hidden">
-            <h3>Редагування списку рибалок</h3>
+            <h3>Редагування списку рибалок (А-Я)</h3>
             <p style="font-size: 12px; color: var(--text-muted); text-align: center;">Додайте нових або видаліть зайвих</p>
             <div class="form-group" style="display: flex; gap: 8px; margin-top: 10px;">
                 <input type="text" id="new-fisherman-input" placeholder="Прізвище Ім'я нового рибалки" style="margin:0;">
@@ -344,7 +358,7 @@ button:active {
 </div>
 
 <script>
-// Оновлене посилання на ваш Apps Script Web App
+// Ваше робоче посилання на хмару
 const API_URL = "https://script.google.com/macros/s/AKfycbxQbAYZI-FyePofYLYJyWTOe9QKAN_1ZrFUwIwjJ1EgcdQZzfzpo2mLqo7XAm2C5XXf2g/exec";
 
 let appData = {
@@ -368,29 +382,72 @@ let currentUser = null;
 let currentNavDate = new Date();
 let selectedDateStr = null;
 
-function handleLogin() {
-    const userField = document.getElementById("username").value.trim();
-    const passField = document.getElementById("password").value.trim();
+// Функція сортування списку рибалок за алфавітом (українська локаль)
+function sortFishermen() {
+    appData.fishermen.sort((a, b) => a.localeCompare(b, 'uk'));
+}
+
+// Завантаження даних при старті сторінки для заповнення випадаючого списку на вході
+window.onload = function() {
+    loadInitialDataForLogin();
+};
+
+function loadInitialDataForLogin() {
+    fetch(API_URL + "?action=load&t=" + new Date().getTime())
+        .then(res => res.json())
+        .then(data => {
+            if (data && data.fishermen && data.fishermen.length > 0) {
+                appData.fishermen = data.fishermen;
+            }
+            sortFishermen();
+            if (data && data.shifts) appData.shifts = data.shifts;
+            
+            // Заповнюємо випадаючий список на формі входу
+            let loginSelect = document.getElementById("select-fisherman-login");
+            loginSelect.innerHTML = '<option value="">-- Оберіть зі списку --</option>';
+            appData.fishermen.forEach(f => {
+                let opt = document.createElement("option");
+                opt.value = f;
+                opt.innerText = f;
+                loginSelect.appendChild(opt);
+            });
+        })
+        .catch(err => {
+            console.log("Помилка попереднього завантаження:", err);
+            sortFishermen();
+            let loginSelect = document.getElementById("select-fisherman-login");
+            loginSelect.innerHTML = '<option value="">-- Оберіть зі списку --</option>';
+            appData.fishermen.forEach(f => {
+                let opt = document.createElement("option");
+                opt.value = f;
+                opt.innerText = f;
+                loginSelect.appendChild(opt);
+            });
+        });
+}
+
+function handleFishermanLogin() {
+    const selectedFisherman = document.getElementById("select-fisherman-login").value;
     const errorBox = document.getElementById("login-error");
 
-    if (!userField) {
-        errorBox.innerText = "Введіть ваше Прізвище та Ім'я";
+    if (!selectedFisherman) {
+        errorBox.innerText = "Будь ласка, оберіть своє прізвище зі списку!";
         errorBox.classList.remove("hidden");
         return;
     }
 
-    if (userField.toLowerCase() === "admin" && passField === "admin123") {
-        grantAccess({ username: "Адміністратор", role: "admin" });
-        return;
-    }
+    grantAccess({ username: selectedFisherman, role: "user" });
+}
 
-    let foundFisherman = appData.fishermen.find(f => f.toLowerCase() === userField.toLowerCase());
-    if (foundFisherman) {
-        grantAccess({ username: foundFisherman, role: "user" });
+function handleAdminLogin() {
+    const passField = document.getElementById("admin-password").value.trim();
+    const errorBox = document.getElementById("login-error");
+
+    if (passField === "admin123") {
+        grantAccess({ username: "Адміністратор", role: "admin" });
     } else {
-        appData.fishermen.push(userField);
-        grantAccess({ username: userField, role: "user" });
-        saveToCloud();
+        errorBox.innerText = "Невірний пароль адміністратора!";
+        errorBox.classList.remove("hidden");
     }
 }
 
@@ -415,8 +472,8 @@ function handleLogout() {
     currentUser = null;
     document.getElementById("app-section").classList.add("hidden");
     document.getElementById("login-section").classList.remove("hidden");
-    document.getElementById("username").value = "";
-    document.getElementById("password").value = "";
+    document.getElementById("admin-password").value = "";
+    loadInitialDataForLogin(); // Оновлюємо список на випадок змін
 }
 
 function loadAppData() {
@@ -429,15 +486,18 @@ function loadAppData() {
                     if (!appData.fishermen.includes(f)) appData.fishermen.push(f);
                 });
             }
+            sortFishermen();
             renderAll();
         })
         .catch(err => {
-            console.log("Помилка завантаження, використовую локальні дані:", err);
+            console.log("Помилка завантаження, використовую поточні дані:", err);
+            sortFishermen();
             renderAll();
         });
 }
 
 function saveToCloud() {
+    sortFishermen();
     const jsonStr = encodeURIComponent(JSON.stringify(appData));
     fetch(API_URL + "?action=save&db=" + jsonStr + "&t=" + new Date().getTime())
         .then(res => res.json())
@@ -534,6 +594,7 @@ function openBookingModal(dateStr, existingShift) {
     primarySelect.innerHTML = "";
     partnerSelect.innerHTML = `<option value="">-- Без напарника (один) --</option>`;
     
+    sortFishermen();
     appData.fishermen.forEach(f => {
         let opt1 = document.createElement("option");
         opt1.value = f;
@@ -551,7 +612,7 @@ function openBookingModal(dateStr, existingShift) {
         if (appData.fishermen.length > 0) primarySelect.value = appData.fishermen[0];
     } else {
         primarySelect.value = currentUser ? currentUser.username : (appData.fishermen[0] || "");
-        primarySelect.disabled = false;
+        primarySelect.disabled = false; // Звичайний рибалка теж може обрати дату або змінити за потреби
     }
     
     let infoText = document.getElementById("modal-date-info");
@@ -635,6 +696,7 @@ function submitBooking() {
 function renderFishermenList() {
     const container = document.getElementById("fishermen-manage-list");
     container.innerHTML = "";
+    sortFishermen();
     if (appData.fishermen.length === 0) {
         container.innerHTML = `<p style="text-align: center; color: var(--text-muted); font-size: 13px;">Список порожній</p>`;
         return;
@@ -644,7 +706,7 @@ function renderFishermenList() {
         card.className = "stats-card";
         card.innerHTML = `
             <span style="font-size: 13px;"><b>${f}</b></span>
-            <button class="btn-danger" style="width: auto; margin: 0; padding: 4px 8px; font-size: 12px;" onclick="removeFisherman(${index})">Видалити</button>
+            <button class="btn-danger" style="width: auto; margin: 0; padding: 4px 8px; font-size: 12px;" onclick="removeFisherman('${f.replace(/'/g, "\\'")}')">Видалити</button>
         `;
         container.appendChild(card);
     });
@@ -662,15 +724,16 @@ function addFisherman() {
         return;
     }
     appData.fishermen.push(name);
+    sortFishermen();
     nameInput.value = "";
     saveToCloud();
     renderFishermenList();
     alert("Рибалку успішно додано!");
 }
 
-function removeFisherman(index) {
-    if (confirm("Ви дійсно хочете видалити цього рибалку?")) {
-        appData.fishermen.splice(index, 1);
+function removeFisherman(nameToRemove) {
+    if (confirm(`Ви дійсно хочете видалити рибалку: ${nameToRemove}?`)) {
+        appData.fishermen = appData.fishermen.filter(f => f !== nameToRemove);
         saveToCloud();
         renderFishermenList();
     }
@@ -687,6 +750,7 @@ function renderStats() {
     const container = document.getElementById("fishermen-stats-list");
     container.innerHTML = "";
     let counts = {};
+    sortFishermen();
     appData.fishermen.forEach(f => counts[f] = 0);
     appData.shifts.forEach(s => {
         if (s.status === 'confirmed' && s.guard1 && s.guard1 !== "undefined") {
