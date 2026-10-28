@@ -307,7 +307,7 @@ button:active {
         <div id="tab-stats" class="tab-content hidden">
             <h3>Облік чергувань рибалок</h3>
             <p style="font-size: 12px; color: var(--text-muted); text-align: center;">Кількість виходів та дати чергувань</p>
-            <div id="fishermen-stats-list" style="max-height: 380px; overflow-y: auto; padding-right: 3px; margin-top: 10px;"></div>
+            <div id="fishermen-stats-list" style="max-height: 420px; overflow-y: auto; padding-right: 3px; margin-top: 10px;"></div>
         </div>
 
         <!-- ВКЛАДКА 3: АДМІНІСТРУВАННЯ ЗАЯВОК ТА ПРИСУТНОСТІ -->
@@ -316,7 +316,7 @@ button:active {
             <div style="margin-bottom: 15px; text-align: right;">
                 <button class="btn-danger" style="width: auto; padding: 6px 12px; font-size: 12px;" onclick="clearCorruptedShifts()">Очистити биті записи</button>
             </div>
-            <div id="admin-requests-list"></div>
+            <div id="admin-requests-list" style="max-height: 420px; overflow-y: auto;"></div>
         </div>
 
         <!-- ВКЛАДКА 4: КЕРУВАННЯ СПИСКОМ РИБАЛОК -->
@@ -327,7 +327,8 @@ button:active {
                 <input type="text" id="new-fisherman-input" placeholder="Прізвище Ім'я нового рибалки" style="margin:0;">
                 <button class="btn-green" style="width: auto; margin: 0; padding: 10px 15px;" onclick="addFisherman()">Додати</button>
             </div>
-            <div id="fishermen-manage-list" style="max-height: 320px; overflow-y: auto; margin-top: 15px;"></div>
+            <!-- Збільшено висоту блоку та додано комфортну прокрутку -->
+            <div id="fishermen-manage-list" style="max-height: 420px; overflow-y: auto; margin-top: 15px; padding-right: 4px;"></div>
         </div>
     </div>
 </div>
@@ -380,10 +381,9 @@ let currentUser = null;
 let currentNavDate = new Date();
 let selectedDateStr = null;
 
-// Допоміжна функція форматування дати з "YYYY-MM-DD" у "DD.MM"
 function formatDateShort(dateStr) {
     if (!dateStr) return "";
-    let parts = dateStr.split("-"); // [Рік, Місяць, День]
+    let parts = dateStr.split("-");
     if (parts.length === 3) {
         return `${parts[2]}.${parts[1]}`;
     }
@@ -712,8 +712,8 @@ function renderFishermenList() {
         let card = document.createElement("div");
         card.className = "stats-card";
         card.innerHTML = `
-            <span style="font-size: 13px;"><b>${f}</b></span>
-            <button class="btn-danger" style="width: auto; margin: 0; padding: 4px 8px; font-size: 12px;" onclick="removeFisherman('${f.replace(/'/g, "\\'")}')">Видалити</button>
+            <span style="font-size: 13px; font-weight: 600;">${f}</span>
+            <button class="btn-danger" style="width: auto; margin: 0; padding: 5px 10px; font-size: 12px;" onclick="removeFisherman(${index})">Видалити</button>
         `;
         container.appendChild(card);
     });
@@ -738,9 +738,10 @@ function addFisherman() {
     alert("Рибалку успішно додано!");
 }
 
-function removeFisherman(nameToRemove) {
+function removeFisherman(index) {
+    let nameToRemove = appData.fishermen[index];
     if (confirm(`Ви дійсно хочете видалити рибалку: ${nameToRemove}?`)) {
-        appData.fishermen = appData.fishermen.filter(f => f !== nameToRemove);
+        appData.fishermen.splice(index, 1);
         saveToCloud();
         renderFishermenList();
     }
@@ -758,7 +759,6 @@ function renderStats() {
     container.innerHTML = "";
     sortFishermen();
 
-    // Збираємо дати для кожного рибалки на основі фактичної присутності
     let fishermanDates = {};
     appData.fishermen.forEach(f => fishermanDates[f] = []);
 
