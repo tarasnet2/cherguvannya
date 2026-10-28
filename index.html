@@ -208,6 +208,7 @@ button:active {
     border-radius: 6px;
     font-size: 11px;
     font-weight: bold;
+    text-align: right;
 }
 .count-done { background: #d1fae5; color: #065f46; }
 .count-none { background: #fee2e2; color: #991b1b; }
@@ -302,10 +303,10 @@ button:active {
             </p>
         </div>
 
-        <!-- ВКЛАДКА 2: СТАТИСТИКА -->
+        <!-- ВКЛАДКА 2: СТАТИСТИКА (ЧЕРГУВАВ) -->
         <div id="tab-stats" class="tab-content hidden">
             <h3>Облік чергувань рибалок</h3>
-            <p style="font-size: 12px; color: var(--text-muted); text-align: center;">Кількість фактичних виходів на чергування</p>
+            <p style="font-size: 12px; color: var(--text-muted); text-align: center;">Кількість виходів та дати чергувань</p>
             <div id="fishermen-stats-list" style="max-height: 380px; overflow-y: auto; padding-right: 3px; margin-top: 10px;"></div>
         </div>
 
@@ -378,6 +379,16 @@ let appData = {
 let currentUser = null;
 let currentNavDate = new Date();
 let selectedDateStr = null;
+
+// Допоміжна функція форматування дати з "YYYY-MM-DD" у "DD.MM"
+function formatDateShort(dateStr) {
+    if (!dateStr) return "";
+    let parts = dateStr.split("-"); // [Рік, Місяць, День]
+    if (parts.length === 3) {
+        return `${parts[2]}.${parts[1]}`;
+    }
+    return dateStr;
+}
 
 function sortFishermen() {
     appData.fishermen.sort((a, b) => a.localeCompare(b, 'uk'));
@@ -580,7 +591,7 @@ function changeMonth(direction) {
 
 function openBookingModal(dateStr, existingShift) {
     selectedDateStr = dateStr;
-    document.getElementById("modal-date-title").innerText = `Дата: ${dateStr}`;
+    document.getElementById("modal-date-title").innerText = `Дата: ${formatDateShort(dateStr)}`;
     
     let primarySelect = document.getElementById("booking-primary");
     let partnerSelect = document.getElementById("booking-partner");
@@ -680,7 +691,7 @@ function submitBooking() {
         guard1: primary,
         guard2: partner || "",
         status: statusVal,
-        attended1: (statusVal === 'confirmed'), // За замовчуванням адмін при створенні вважає присутнім
+        attended1: (statusVal === 'confirmed'),
         attended2: (statusVal === 'confirmed')
     });
     
@@ -745,28 +756,38 @@ function clearCorruptedShifts() {
 function renderStats() {
     const container = document.getElementById("fishermen-stats-list");
     container.innerHTML = "";
-    let counts = {};
     sortFishermen();
-    appData.fishermen.forEach(f => counts[f] = 0);
-    
+
+    // Збираємо дати для кожного рибалки на основі фактичної присутності
+    let fishermanDates = {};
+    appData.fishermen.forEach(f => fishermanDates[f] = []);
+
     appData.shifts.forEach(s => {
         if (s.status === 'confirmed') {
+            let shortDate = formatDateShort(s.date);
             if (s.guard1 && s.guard1 !== "undefined" && (s.attended1 === true || s.attended1 === undefined)) {
-                if (counts[s.guard1] !== undefined) counts[s.guard1]++;
+                if (fishermanDates[s.guard1]) fishermanDates[s.guard1].push(shortDate);
             }
             if (s.guard2 && s.guard2 !== "undefined" && (s.attended2 === true || s.attended2 === undefined)) {
-                if (counts[s.guard2] !== undefined) counts[s.guard2]++;
+                if (fishermanDates[s.guard2]) fishermanDates[s.guard2].push(shortDate);
             }
         }
     });
 
     appData.fishermen.forEach(f => {
-        let total = counts[f] || 0;
+        let datesArr = fishermanDates[f] || [];
+        let total = datesArr.length;
         let card = document.createElement("div");
         card.className = "stats-card";
-        let badgeHtml = total > 0 
-            ? `<span class="badge-count count-done">Чергувань: ${total}</span>` 
-            : `<span class="badge-count count-none">Ще ні</span>`;
+        
+        let badgeHtml = "";
+        if (total > 0) {
+            let datesStr = datesArr.join(", ");
+            badgeHtml = `<span class="badge-count count-done">Чергувань: ${total}<br><span style="font-size: 10px; font-weight: normal; color: #065f46;">(${datesStr})</span></span>`;
+        } else {
+            badgeHtml = `<span class="badge-count count-none">Ще ні</span>`;
+        }
+
         card.innerHTML = `<span style="font-size: 13px;"><b>${f}</b></span>${badgeHtml}`;
         container.appendChild(card);
     });
@@ -784,7 +805,6 @@ function renderAdminRequests() {
         return;
     }
 
-    // БЛОК 1: Заявки, що очікують підтвердження
     if (pendingShifts.length > 0) {
         let pendingTitle = document.createElement("h4");
         pendingTitle.style.color = "var(--accent-orange)";
@@ -800,7 +820,7 @@ function renderAdminRequests() {
             card.style.gap = "6px";
             let guardsText = shift.guard2 ? `${shift.guard1} та ${shift.guard2}` : `${shift.guard1} (один)`;
             card.innerHTML = `
-                <div style="font-size: 13px;">Дата: <b>${shift.date}</b></div>
+                <div style="font-size: 13px;">Дата: <b>${formatDateShort(shift.date)}</b></div>
                 <div style="font-size: 13px;">Хто заступає: <b>${guardsText}</b></div>
                 <div style="display: flex; gap: 8px; width: 100%; margin-top: 4px;">
                     <button class="btn-green" style="margin:0; padding: 8px; font-size: 13px;" onclick="confirmShift('${shift.date}')">Підтвердити</button>
@@ -811,7 +831,6 @@ function renderAdminRequests() {
         });
     }
 
-    // БЛОК 2: Підтверджені чергування з галочками присутності
     if (confirmedShifts.length > 0) {
         let confirmedTitle = document.createElement("h4");
         confirmedTitle.style.color = "var(--accent-green)";
@@ -820,7 +839,6 @@ function renderAdminRequests() {
         confirmedTitle.innerText = "Підтверджені чергування (Відмітка присутності):";
         container.appendChild(confirmedTitle);
 
-        // Сортуємо за датою (від найновіших)
         confirmedShifts.sort((a, b) => b.date.localeCompare(a.date));
 
         confirmedShifts.forEach(shift => {
@@ -845,7 +863,7 @@ function renderAdminRequests() {
 
             card.innerHTML = `
                 <div style="font-size: 13px; width:100%; display:flex; justify-content:space-between; align-items:center;">
-                    <span>Дата: <b>${shift.date}</b></span>
+                    <span>Дата: <b>${formatDateShort(shift.date)}</b></span>
                     <button class="btn-danger" style="width: auto; margin: 0; padding: 3px 8px; font-size: 11px;" onclick="rejectShift('${shift.date}')">Скасувати</button>
                 </div>
                 <div style="width: 100%; background: #ffffff; padding: 8px; border-radius: 6px; border: 1px solid var(--border); box-sizing: border-box; margin-top: 2px;">
